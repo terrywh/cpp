@@ -12,7 +12,7 @@ int core_coroutine_test(int argc, char* argv[]) {
     coroutine_condition_variable cv(io);
     coroutine_unique_mutex mutex(io);
     coroutine_unique_lock guard(mutex);
-    auto channel = std::make_shared<coroutine_channel<int>>(io);
+    auto channel = make_channel<int>(io);
     int shared = 0;
 
     coroutine::start(io, [&cv, &mutex, &channel, &shared] (coroutine_handler& ch) {

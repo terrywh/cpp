@@ -68,4 +68,9 @@ public:
 template <class T>
 using unbuffered_channel = basic_coroutine_channel<T, 1ul>;
 
+template <class T, std::size_t Capacity = 1ul>
+std::shared_ptr<basic_coroutine_channel<T, Capacity>> make_channel(boost::asio::io_context& io) {
+    return std::make_shared<basic_coroutine_channel<T, Capacity>>(io);
+}
+
 } // namespace xbond
