@@ -49,8 +49,6 @@ class logger {
 
     private:
         explicit record(logger& logger, level_type level);
-        
-
         logger&           logger_;
         int               status_;
         std::stringstream stream_;
@@ -72,7 +70,8 @@ class logger {
     record open_record(level_type lvl);
     void   send_record(record& record);
     std::chrono::system_clock::time_point time_record() const;
-    
+    template <class Writer>
+    void writer(Writer&& w) { writer_ = w; }
 };
 
 } // namespace log
