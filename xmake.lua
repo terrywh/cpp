@@ -1,0 +1,52 @@
+set_project("ark_proxy")
+set_languages("c11","cxx17")
+
+--
+option("vendor-gsl")
+    set_default("$(projectdir)/vendor/gsl")
+    after_check(function(option) 
+        option:add("sysincludedirs", "$(vendor-gsl)/include", {public = true})
+    end)
+
+--
+option("vendor-date")
+    set_default("$(projectdir)/vendor/date")
+    after_check(function(option) 
+        option:add("sysincludedirs", "$(vendor-date)/include", {public = true})
+    end)
+
+-- 
+option("vendor-boost")
+    set_default("/data/vendor/boost-1.75")
+    after_check(function(option)
+        option:add("sysincludedirs","$(vendor-boost)/include", {public = true})
+        option:add("linkdirs","$(vendor-boost)/lib")
+        option:add("syslinks", "boost_json", "boost_context", "boost_system")
+    end)
+--
+option("vendor-openssl")
+    set_default("/data/vendor/openssl-1.1")
+    after_check(function(option)
+        option:add("sysincludedirs", "$(vendor-openssl)/include", {public = true})
+        option:add("linkdirs", "$(vendor-openssl)/lib")
+        option:add("syslinks", "ssl", "crypto")
+    end)
+
+target("xbond")
+    set_kind("static")
+    add_rules("mode.debug", "mode.release", "mode.releasedbg")
+    add_options("vendor-date", "vendor-boost", "vendor-fmt", "vendor-openssl")
+    add_links("pthread")
+    add_includedirs("include")
+    add_headerfiles("include/(xbond/**.hpp)")
+    set_pcxxheader("include/xbond/vendor.h")
+    add_files("src/**.cpp")
+    add_files("vendor/date/src/tz.cpp", {defines = "USE_OS_TZDB"})
+
+target("xbond-test")
+    set_kind("binary")
+    add_rules("mode.debug", "mode.release", "mode.releasedbg")
+    add_deps("xbond")
+    add_includedirs("include")
+    set_pcxxheader("include/xbond/vendor.h")
+    add_files("test/**.cpp")
