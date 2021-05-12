@@ -15,6 +15,9 @@ class sha256 {
     void update(StringView sv) {
         SHA256_Update(&hash_, sv.data(), sv.size());
     }
+    void update(const char* data, std::size_t size) {
+        SHA256_Update(&hash_, data, size);
+    }
     std::array<std::uint8_t, 32> digest() {
         std::array<std::uint8_t, 32> hash;
         SHA256_Final(hash.data(), &hash_);

@@ -1,31 +1,19 @@
 set_project("ark_proxy")
 set_languages("c11","cxx17")
 
---
-option("vendor-gsl")
-    set_default("$(projectdir)/vendor/gsl")
-    after_check(function(option) 
-        option:add("sysincludedirs", "$(vendor-gsl)/include", {public = true})
-    end)
-
---
-option("vendor-date")
-    set_default("$(projectdir)/vendor/date")
-    after_check(function(option) 
-        option:add("sysincludedirs", "$(vendor-date)/include", {public = true})
-    end)
-
 -- 
 option("vendor-boost")
     set_default("/data/vendor/boost-1.75")
+    set_showmenu(true)
     after_check(function(option)
         option:add("sysincludedirs","$(vendor-boost)/include", {public = true})
         option:add("linkdirs","$(vendor-boost)/lib")
-        option:add("syslinks", "boost_json", "boost_context", "boost_system")
+        option:add("syslinks", "boost_json", "boost_filesystem", "boost_context", "boost_system")
     end)
 --
 option("vendor-openssl")
     set_default("/data/vendor/openssl-1.1")
+    set_showmenu(true)
     after_check(function(option)
         option:add("sysincludedirs", "$(vendor-openssl)/include", {public = true})
         option:add("linkdirs", "$(vendor-openssl)/lib")
@@ -36,9 +24,13 @@ target("xbond")
     set_kind("static")
     add_rules("mode.debug", "mode.release", "mode.releasedbg")
     add_options("vendor-date", "vendor-boost", "vendor-fmt", "vendor-openssl")
+    add_cxxflags("-fPIC")
     add_links("pthread")
-    add_includedirs("include")
-    add_headerfiles("include/(xbond/**.hpp)")
+    add_includedirs(
+        "include",
+        "vendor/gsl/include",
+        "vendor/date/include",
+        {public = true})
     set_pcxxheader("include/xbond/vendor.h")
     add_files("src/**.cpp")
     add_files("vendor/date/src/tz.cpp", {defines = "USE_OS_TZDB"})

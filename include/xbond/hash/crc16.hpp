@@ -13,6 +13,9 @@ class crc16 {
     void update(Span sv) {
         hash_.process_bytes(sv.data(), sv.size());
     }
+    void update(const char* data, std::size_t size) {
+        hash_.process_bytes(data, size);
+    }
     std::uint16_t digest() {
         return hash_.checksum();
     }

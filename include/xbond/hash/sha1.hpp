@@ -15,6 +15,9 @@ class sha1 {
     void update(Span sv) {
         SHA1_Update(&hash_, sv.data(), sv.size());
     }
+    void update(const char* data, std::size_t size) {
+        SHA1_Update(&hash_, data, size);
+    }
     std::array<std::uint8_t, 20> digest() {
         std::array<std::uint8_t, 20> hash;
         SHA1_Final(hash.data(), &hash_);
