@@ -21,6 +21,6 @@ namespace std {
 // 提供 iterator  
 template <class T>
 struct iterator_traits<xbond::encoding::pointer_back_iterator<T>> {
-    using value_type = xbond::encoding::pointer_back_iterator<T>::value_type;
+    using value_type = typename xbond::encoding::pointer_back_iterator<T>::value_type;
 };
 } // namespace std
