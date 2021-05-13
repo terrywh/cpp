@@ -4,6 +4,7 @@
 #include <boost/beast/http.hpp>
 #include <array>
 
+namespace xbond {
 namespace net {
 namespace http {
 // 配合 Boost.JSON 及 Boost.Beast 库，接收和发送 JSON 形式的 HTTP 消息
@@ -83,4 +84,4 @@ public:
 
 } // namespace http
 } // namespace net
-
+} // namespace xbond
