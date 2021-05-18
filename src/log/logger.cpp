@@ -24,7 +24,8 @@ logger::record logger::open_record(level_type lvl) {
 }
 //
 void logger::send_record(record& record) {
-    std::cout << record.stream_.str() << std::endl;
+    auto str = record.stream_.str();
+    writer_(str.data(), str.size());
 }
 
 std::chrono::system_clock::time_point logger::time_record() const {

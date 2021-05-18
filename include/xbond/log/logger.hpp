@@ -34,6 +34,7 @@ class logger {
         record(const record& r) = delete;
 
         ~record() {
+            stream_.put('\n');
             logger_.send_record(*this);
         }
 

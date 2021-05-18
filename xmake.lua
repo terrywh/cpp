@@ -1,7 +1,10 @@
 set_project("ark_proxy")
 set_languages("c11","cxx17")
 
--- 
+if (not vendor) 
+then 
+    vendor = {}
+end
 option("vendor-boost")
     set_default(vendor["boost"] or os.getenv("VENDOR-BOOST") or "/data/vendor/boost-1.75")
     set_showmenu(true)
