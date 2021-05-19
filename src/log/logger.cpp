@@ -1,6 +1,6 @@
-#include "../../include/xbond/log/logger.hpp"
-#include "../../include/xbond/time/date.hpp"
-#include "../../include/xbond/time/delta_clock.hpp"
+#include <xbond/log/logger.hpp>
+#include <xbond/time/date.hpp>
+#include <xbond/time/delta_clock.hpp>
 
 namespace xbond {
 namespace log {
@@ -31,6 +31,22 @@ void logger::send_record(record& record) {
 std::chrono::system_clock::time_point logger::time_record() const {
     static time::delta_clock clock;
     return clock;
+}
+
+file_writer::file_writer(const char* file, bool create_directory) {
+    if (create_directory) {
+        boost::filesystem::path path(file);
+        boost::filesystem::create_directories(path.parent_path());
+    }
+    // 打开文件
+    file_ = std::make_shared<std::ofstream>(file, std::ios::out | std::ios::ate);
+    if (!file_->is_open()) 
+        throw std::runtime_error("cannot create/open file for append");
+}
+
+void file_writer::operator()(const char* data, std::size_t size) {
+    file_->write(data, size);
+    file_->flush(); // 按写入条目输出
 }
 
 } // namespace log

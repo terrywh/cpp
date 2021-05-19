@@ -75,5 +75,13 @@ class logger {
     void writer(Writer&& w) { writer_ = w; }
 };
 
+class file_writer {
+    std::shared_ptr<std::ofstream> file_;
+
+ public:
+    file_writer(const char* file, bool create_directory = false);
+    void operator()(const char* data, std::size_t size);
+};
+
 } // namespace log
 } // namespace xbond
