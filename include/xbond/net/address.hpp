@@ -13,16 +13,17 @@ public:
     /**
      * @param addr 地址信息，例如 www.qq.com:443 或 127.0.0.1:8080
      */
-    template <class StringView>
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     explicit address(StringView addr) {
-        std::size_t idx = addr.find_last_of(':');
+        std::string_view sv = addr;
+        std::size_t idx = sv.find_last_of(':');
         if (idx <= 1) throw std::runtime_error("failed to parse address: colon not found");
 
-        host_.assign(addr.data(), idx);
-        port_ = std::atoi(&addr[idx + 1]);
+        host_.assign(sv.data(), idx);
+        port_ = std::atoi(&sv[idx + 1]);
     }
-    template <class StringView>
-    address(StringView host, std::uint16_t port)
+
+    address(const std::string& host, std::uint16_t port)
     : host_(host.data(), host.size()), port_(port) {}
 
     address(const address& addr) = default;
@@ -44,6 +45,12 @@ public:
         std::size_t len = std::sprintf(const_cast<char*>(str.data()), "%s:%u", host_.c_str(), port_);
         str.resize(len);
         return str;
+    }
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
+    address& operator =(StringView s) {
+        address addr {s};
+        host_ = addr.host_;
+        port_ = addr.port_;
     }
     operator boost::asio::ip::tcp::endpoint() const {
         return boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(host_), port_ };

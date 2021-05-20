@@ -5,7 +5,7 @@
 
 namespace xbond {
 // 仿 Go 的 Channel 实现
-// 注意要求 T 类型须满足: 1. 复制构造 2. 标准赋值 3. 标准销毁
+// TODO: 注意要求 T 类型须满足: 1. 复制构造 2. 标准赋值 3. 标准销毁
 template <class T, std::size_t Capacity>
 class basic_coroutine_channel: public std::enable_shared_from_this<basic_coroutine_channel<T, Capacity>> {
     static_assert(std::is_copy_constructible<T>::value 

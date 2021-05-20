@@ -28,7 +28,12 @@ int net_hardware_address_test(int argc, char* argv[]) {
 }
 
 int net_test(int argc, char* argv[]) {
-    std::cout << __func__ << "\n\t";
+    std::cout << __func__ << "\n";
+    net::address addr("1.1.1.1:2222");
+    std::cout << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << std::endl;
+    addr = "2.2.2.2:3333";
+    std::cout << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << std::endl;
+    std::cout << "\t";
     net_netlink_route_list_device_test(argc, argv);
     std::cout << "\t";
     net_hardware_address_test(argc, argv);

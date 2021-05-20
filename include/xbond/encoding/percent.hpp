@@ -31,8 +31,9 @@ class percent {
         return j;
     }
     // 
-    template <class StringView>
-    static std::string encode(const StringView& sv) {
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
+    static std::string encode(const StringView& s) {
+        std::string_view sv = s;
         std::string str;
         str.reserve(sv.size() * 2);
         encode(sv.data(), sv.data() + sv.size(),
@@ -68,8 +69,9 @@ class percent {
         return j;
     }
     // 
-    template <class StringView>
-    static std::string decode(const StringView& sv) {
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
+    static std::string decode(const StringView& s) {
+        std::string_view sv = s;
         std::string str;
         str.reserve(sv.size());
         decode(sv.data(), sv.data() + sv.size(), std::back_insert_iterator<std::string>(str));

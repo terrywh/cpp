@@ -180,21 +180,23 @@ class json {
     }
     // 结合 boost::json::parse 的解析与 boost::property_tree::ptree 容器
     // 允许用户使用带注释、结尾逗号的 JSON 数据
-    template <class StringView>
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     static void decode(StringView json, boost::property_tree::ptree& conf,
         const boost::json::parse_options& options = default_parse_options()) {
+        std::string_view sv = json;
         boost::system::error_code error;
         parser_type parser(options, conf);
-        parser.write_some(false, json.data(), json.size(), error);
+        parser.write_some(false, sv.data(), sv.size(), error);
         if (error) throw boost::system::system_error(error);
         // parser.done();
     }
-    template <class StringView>
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     static boost::json::value decode(StringView json,
         const boost::json::parse_options& options = default_parse_options()) {
+        std::string_view sv = json;
         boost::system::error_code error;
         boost::json::parser parser(boost::json::storage_ptr{}, options);
-        parser.write(json.data(), json.size(), error);
+        parser.write(sv.data(), sv.size(), error);
         if (error) throw boost::system::system_error(error);
         return parser.release();
     }

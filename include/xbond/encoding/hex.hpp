@@ -1,4 +1,5 @@
 #pragma once
+#include "../utility/data_view.hpp"
 #include <string>
 
 namespace xbond {
@@ -9,8 +10,8 @@ namespace encoding {
         static constexpr char HEX_CONVERT_TABLE[] = "0123456789ABCDEF";
     public:
         // 对制定区域数据进行编码，将结果写入目标位置
-        template <class InputIterator, class OutputIterator>
-        static OutputIterator encode(InputIterator begin, InputIterator end, OutputIterator to) {
+        template <class OutIterator>
+        static OutIterator encode(const char* begin, const char* end, OutIterator to) {
             auto j = to;
             for(auto i=begin; i!=end; ++i) {
                 unsigned char c = *i;
@@ -20,8 +21,8 @@ namespace encoding {
             return j;
         }
         // 解码对应区域字符串数据，并将结果写入目标位置
-        template <class InputIterator, class OutputIterator>
-        static OutputIterator decode(InputIterator begin, InputIterator end, OutputIterator to) {
+        template <typename OutIterator>
+        static OutIterator decode(const char* begin, const char* end, OutIterator to) {
             auto j = to;
             for(auto i=begin; i!=end;) {
                 // 以下代码参考 PHP 对应 php_hex2bin 的实现略作调整
@@ -49,21 +50,23 @@ namespace encoding {
             return j;
         }
         // 对字符数据进行编码，返回编码后的结果
-        template <class Span>
-        static std::string encode(Span raw) {
+        template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+        static std::string encode(DataView data) {
+            detail::data_view dv = data;
             std::string o;
-            o.reserve(raw.size() * 2);
+            o.reserve(dv.size() * 2);
             // 借助通用实现
-            encode(raw.begin(), raw.end(), std::insert_iterator<std::string>(o, o.begin()));
+            encode(dv.begin(), dv.end(), std::insert_iterator<std::string>(o, o.begin()));
             return o;
         }
         // 对字符数据进行解码，返回结果（若需在源地址空进进行解码，请使用上述 iterator 形式的重载）
-        template <class Span>
-        static std::string decode(Span hex) {
+        template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+        static std::string decode(DataView data) {
+            detail::data_view dv = data;
             std::string o;
-            o.reserve(hex.size() / 2);
+            o.reserve(dv.size() / 2);
             // 借助通用实现
-            decode(hex.begin(), hex.end(), std::insert_iterator<std::string>(o, o.begin()));
+            decode(dv.begin(), dv.end(), std::insert_iterator<std::string>(o, o.begin()));
             return o;
         }
     };

@@ -11,9 +11,10 @@ namespace encoding {
 class utf8 {
 public:
     // 以 UTF8 编码计算字符个数
-    template <class StringView>
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     static std::size_t length(StringView text) {
-        return MAX(cp_strlen_utf8(text.data()), text.size());
+        std::string_view sv = text;
+        return MAX(cp_strlen_utf8(sv.data()), sv.size());
     }
     // 以 UTF8 编码截取偏移 offset 个字符长度 length 个字符
     static std::string substr(const std::string& text, std::size_t offset, std::size_t length) {

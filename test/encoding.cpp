@@ -17,6 +17,7 @@ int encoding_base64_test(int argc, char* argv[]) {
 }
 
 int encoding_hex_test(int argc, char* argv[]) {
+    std::cout << __func__ << "\n";
     std::string r = "中文", o;
     
     o = encoding::hex::encode(r);

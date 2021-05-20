@@ -8,6 +8,21 @@ namespace log {
     (_logger_).open_record(xbond::log::logger::_level_); !!record;) record.stream()
 
 /**
+ * 判定类型是否可被用于日志输出
+ * 大致约定如下：
+ * T writer;
+ * const char* data;
+ * std::size_t size;
+ * writer(data, size);
+ */
+template <class T>
+struct is_writer {
+    template <typename U> static auto test(int) -> typename std::invoke_result<U, const char*, std::size_t>::type;
+    template <typename> static std::false_type test(...);
+    constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
+};
+
+/**
  * 日志对象
  * @remark 同一对象支持多线程调用；
  */
@@ -57,7 +72,7 @@ class logger {
         friend class logger;
     };
     // 指定输出器
-    template <class Writer>
+    template <class Writer, typename = typename std::enable_if<is_writer<Writer>::value, Writer>::type>
     logger(Writer&& writer, std::chrono::hours zone_offset = std::chrono::hours(8))
     : writer_(writer)
     , offset_(zone_offset) {}
@@ -72,7 +87,10 @@ class logger {
     void   send_record(record& record);
     std::chrono::system_clock::time_point time_record() const;
     template <class Writer>
-    void writer(Writer&& w) { writer_ = w; }
+    void writer(Writer&& w) {
+        static_assert(is_writer<Writer>::value, "Writer requirement does NOT match");
+        writer_ = w;
+    }
 };
 
 class file_writer {

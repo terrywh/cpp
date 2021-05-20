@@ -8,9 +8,8 @@ namespace encoding {
  * class T {
  * public:
  *      void update(const char* data, std::size_t size);
- *      R digest();
+ *      <non-void> digest();
  * };
- * class R { ... };
  */
 template <class T>
 struct is_hasher {

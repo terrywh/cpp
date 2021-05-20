@@ -1,4 +1,5 @@
 #pragma once
+#include "../utility/data_view.hpp"
 #include <string>
 #include <openssl/evp.h>
 // extern "C" EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
@@ -9,12 +10,13 @@ namespace encoding {
 class base64 {
 public:
     // 编码并返回变后的字符串
-    template <class Span>
-    static std::string encode(Span str) {
-        std::size_t len = encode_size(str.size());
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    static std::string encode(DataView str) {
+        detail::data_view dv = str;
+        std::size_t len = encode_size(dv.size());
         std::string enc(len, '\0');
         
-        len = encode(str, const_cast<char*>(enc.data()));
+        len = encode(dv, const_cast<char*>(enc.data()));
 
         enc.resize(len); // additional \0 is written
         return enc;
@@ -30,14 +32,15 @@ public:
      * 若用户需要 c_str 需要自行在长度末尾添加 '\0' 结束符
      * 注意：用户需要保证 out 指向的缓存拥有足够空间
      */
-    template <class Span>
-    static std::size_t encode(Span str, char* out) {
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    static std::size_t encode(DataView str, char* out) {
+        detail::data_view dv = str;
         int len;
         unsigned char *o, *b = o = reinterpret_cast<unsigned char*>(out);
 
         EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
         EVP_EncodeInit(ctx);
-        EVP_EncodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(str.data()), str.size());
+        EVP_EncodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(dv.data()), dv.size());
         o += len;
         EVP_EncodeFinal(ctx, o, &len);
         o += len;
@@ -50,12 +53,13 @@ public:
     /**
      * 编码指定数据
      */
-    template <class Span>
-    static std::string decode(Span str) {
-        int len = decode_size(str.size());
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    static std::string decode(DataView str) {
+        detail::data_view dv = str;
+        int len = decode_size(dv.size());
         std::string dec(len, '\0');
 
-        len = decode(str, const_cast<char*>(dec.data()));
+        len = decode(dv, const_cast<char*>(dec.data()));
 
         dec.resize(len);
         return dec;
@@ -67,14 +71,15 @@ public:
         return (size + 3)/4 * 3;
     }
 
-    template <class Span>
-    static std::size_t decode(const Span& str, char* out) {
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    static std::size_t decode(const DataView& str, char* out) {
+        detail::data_view dv = str;
         int len;
         unsigned char *o, *b = o = reinterpret_cast<unsigned char*>(out);
 
         EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
         EVP_DecodeInit(ctx);
-        EVP_DecodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(str.data()), str.size());
+        EVP_DecodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(dv.data()), dv.size());
         o += len;
         EVP_DecodeFinal(ctx, o, &len);
         o += len;

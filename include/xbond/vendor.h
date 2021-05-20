@@ -8,6 +8,7 @@
 #include <boost/process/environment.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/utility/string_view.hpp>
+#include <gsl/span>
 #include <array>
 #include <atomic>
 #include <chrono>

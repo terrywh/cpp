@@ -1,5 +1,6 @@
 #pragma once
 #include "../vendor.h"
+#include "../utility/data_view.hpp"
 #include <openssl/sha.h>
 
 namespace xbond {
@@ -11,24 +12,26 @@ class sha1 {
     sha1() {
         SHA1_Init(&hash_);
     }
-    template <class Span>
-    void update(Span sv) {
-        SHA1_Update(&hash_, sv.data(), sv.size());
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    inline void update(DataView data) {
+        detail::data_view dv = data;
+        SHA1_Update(&hash_, dv.data(), dv.size());
     }
-    void update(const char* data, std::size_t size) {
+    inline void update(const char* data, std::size_t size) {
         SHA1_Update(&hash_, data, size);
     }
-    std::array<std::uint8_t, 20> digest() {
+    inline std::array<std::uint8_t, 20> digest() {
         std::array<std::uint8_t, 20> hash;
         SHA1_Final(hash.data(), &hash_);
         return hash;
     }
-    template <class Span>
-    static std::array<std::uint8_t, 20> hash(Span sv) {
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    static std::array<std::uint8_t, 20> hash(DataView data) {
+        detail::data_view dv = data;
         std::array<std::uint8_t, 20> hash;
         SHA_CTX ctx;
         SHA1_Init(&ctx);
-        SHA1_Update(&ctx, sv.data(), sv.size());
+        SHA1_Update(&ctx, dv.data(), dv.size());
         SHA1_Final(hash.data(), &ctx);
         return hash;
     }

@@ -1,6 +1,6 @@
 #pragma once
 #include "../vendor.h"
-#include "../return_type.hpp"
+#include "../type_traits.hpp"
 #include "detail/netlink_address.hpp"
 #include <boost/process/environment.hpp>
 #include <linux/rtnetlink.h>
