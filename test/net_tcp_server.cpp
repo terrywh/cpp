@@ -19,12 +19,13 @@ void session::run(coroutine_handler& ch) {
     std::array<char, 4096> buffer;
     while (true) {
         std::size_t length = socket_.async_read_some(boost::asio::buffer(buffer), ch[error]);
-        if (error) return;
+        if (error) break;
         boost::asio::async_write(socket_, boost::asio::buffer(buffer, length), ch[error]);
-        if (error) return;
-        break; // 仅做一次就停止
+        if (error) break;
     }
+    std::cout << "\t\tsession: close\n";
     echo_server->close();
+    std::cout << "\t\tserver:  close\n";
 }
 
 class echo_once: public std::enable_shared_from_this<echo_once> {
@@ -45,8 +46,10 @@ class echo_once: public std::enable_shared_from_this<echo_once> {
             boost::asio::async_write(socket_, boost::asio::buffer(sbuffer, 5), ch[error]);
             if (error) return;
             std::array<char, 4096> rbuffer;
-            std::size_t length = boost::asio::async_read(socket_, boost::asio::buffer(rbuffer), ch[error]);
+            std::size_t length = socket_.async_read_some(boost::asio::buffer(rbuffer), ch[error]);
             std::cout << length << "(" << std::string_view{rbuffer.data(), length} << ")\n";
+            socket_.close();
+            std::cout << "\t\tclient:  close\n";
         });
     }
 };

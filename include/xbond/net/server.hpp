@@ -5,21 +5,6 @@
 
 namespace xbond {
 namespace net {
-
-template <class T>
-struct is_tcp_session_runnable {
-    template <typename U> static auto test(int) -> decltype(
-        std::declval<U>().run(std::declval<coroutine_handler&>()));
-    template <typename> static std::false_type test(...);
-    constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
-};
-template <class T>
-struct is_tcp_session_startible {
-    template <typename U> static auto test(int) -> decltype(std::declval<U>().start());
-    template <typename> static std::false_type test(...);
-    constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
-};
-
 /**
  * 判定提供的会话类型是否满足需求
  * 大致约定如下：
@@ -32,9 +17,21 @@ struct is_tcp_session_startible {
  */
 template <class T>
 struct is_tcp_session {
+    struct run {
+        template <typename U> static auto test(int) -> decltype(
+        std::declval<U>().run(std::declval<coroutine_handler&>()));
+        template <typename> static std::false_type test(...);
+        constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
+    };
+    struct start {
+        template <typename U> static auto test(int) -> decltype(std::declval<U>().start());
+        template <typename> static std::false_type test(...);
+        constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
+    };
+
     template <typename U> static auto test(int) -> typename std::enable_if<
             std::is_constructible<U, boost::asio::ip::tcp::socket&&>::value && // 构造
-            (is_tcp_session_runnable<U>::value || is_tcp_session_startible<U>::value),
+            (run::value || start::value),
         std::true_type>::type;
     template <typename> static std::false_type test(...);
 
@@ -51,12 +48,12 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
         acceptor_.async_accept(socket_, 
         [this, self = this->shared_from_this()] (const boost::system::error_code& error) {
             if (error) return;
-            if constexpr (is_tcp_session_runnable<Session>::value)
+            if constexpr (is_tcp_session<Session>::run::value)
                 coroutine::start(socket_.get_executor(),
                 [session = std::make_shared<Session>(std::move(socket_))] (coroutine_handler& ch) {
                     session->run(ch);
                 });
-            else if constexpr(is_tcp_session_startible<Session>::value)
+            else if constexpr(is_tcp_session<Session>::start::value)
                 std::make_shared<Session>(std::move(socket_))->start();
             accept();
         });
@@ -76,6 +73,7 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
     }
     void close() {
         acceptor_.close();
+        socket_.close();
     }
 };
 

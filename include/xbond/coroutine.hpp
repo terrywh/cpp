@@ -1,7 +1,17 @@
 #pragma once
 #include "vendor.h"
+#include <variant>
 
 namespace xbond {
+// 
+class basic_coroutine_error_proxy {
+    std::variant<std::error_code*, boost::system::error_code*> v_;
+ public:
+    basic_coroutine_error_proxy(std::variant<std::error_code*, boost::system::error_code*> v)
+    : v_(v) {}
+    operator std::error_code() { return *std::get<std::error_code*>(v_); }
+    operator boost::system::error_code() { return *std::get<boost::system::error_code*>(v_); }
+};
 // 协程处理器
 template <class C>
 class basic_coroutine_handler {
@@ -9,12 +19,10 @@ public:
     using coroutine_type = typename std::decay<C>::type;
     // 创建空的处理器
     basic_coroutine_handler()
-    : count_(nullptr)
-    , error_(nullptr) {}
+    : count_(nullptr) {}
     // 创建指定协程的处理器
     explicit basic_coroutine_handler(std::shared_ptr<coroutine_type> co)
     : count_(nullptr)
-    , error_(nullptr)
     , co_(co) {}
     // 复制
     basic_coroutine_handler(const basic_coroutine_handler& ch) = default;
@@ -23,9 +31,13 @@ public:
         error_ = &error;
         return *this;
     }
+    basic_coroutine_handler& operator[](std::error_code& error) {
+        error_ = &error;
+        return *this;
+    }
     // 模拟的回调
     void operator()(const boost::system::error_code& error, std::size_t count = 0) {
-        if (error_) *error_ = error;
+        if (error_) *std::get<boost::system::error_code*>(error_.value()) = error;
         if (count_) *count_ = count;
         resume();
     }
@@ -36,13 +48,13 @@ public:
     // 重置处理器
     void reset() {
         count_ = nullptr;
-        error_ = nullptr;
+        error_.reset();
         co_.reset();
     }
     // 重置处理器用于控制指定的协程
     void reset(std::shared_ptr<coroutine_type> co) {
         count_ = nullptr;
-        error_ = nullptr;
+        error_.reset();
         co_ = co;
     }
     // 协程暂停
@@ -53,25 +65,36 @@ public:
         error_ = &error;
         co_->yield();
     }
+    inline void yield(std::error_code& error) {
+        error_ = &error;
+        co_->yield();
+    }
     // 协程恢复
     inline void resume() {
         co_->resume();
     }
     // 协程恢复
     inline void resume(const boost::system::error_code& error) {
-        if (error_) *error_ =  error;
+        if (error_) *std::get<boost::system::error_code*>(error_.value()) = error;
         co_->resume();
     }
-    operator boost::system::error_code&() {
-        assert(error_);
-        return *error_;
+    // 协程恢复
+    inline void resume(const std::error_code& error) {
+        if (error_) *std::get<std::error_code*>(error_.value()) = error;
+        co_->resume();
     }
     inline std::shared_ptr<coroutine_type> co() {
         return co_;
     }
+
+    basic_coroutine_error_proxy error() {
+        assert(error_);
+        return {error_.value()};
+    }
+
 protected:
-    std::size_t*                 count_; // 用于捕获数据量
-    boost::system::error_code*   error_; // 用于捕获错误值
+    std::size_t* count_; // 用于捕获长度数据
+    std::optional< std::variant<std::error_code*, boost::system::error_code*> > error_; // 用于捕获错误值
     // 被管控的协程
     std::shared_ptr<coroutine_type> co_;
 
