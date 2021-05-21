@@ -33,10 +33,12 @@ int net_hardware_address_test(int argc, char* argv[]) {
 
 int net_test(int argc, char* argv[]) {
     LOGGER() << __func__ << "\n";
-    net::address addr("1.1.1.1:2222");
-    LOGGER() << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << "\n";
-    addr = "2.2.2.2:3333";
-    LOGGER() << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << "\n";
+    net::address addr("www.qq.com:443");
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+    addr = "1.1.1.1:2222";
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+    addr = "[2:2:2::2]:3333";
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
 
     net_device_test(argc, argv);
     net_hardware_address_test(argc, argv);

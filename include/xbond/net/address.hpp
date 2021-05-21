@@ -15,15 +15,17 @@ public:
     : host_(""), port_(0u) {}
     /**
      * 分割 ":" IP 地址与端口
-     * @param addr 地址信息，例如 www.qq.com:443 或 127.0.0.1:8080
+     * @param addr 地址信息，例如 www.qq.com:443 或 127.0.0.1:8080 或 [ff::127::1]:8080 或 ff::127::1:8080
+     * 注意，这里允许 IPv6 地址不使用 [] 包裹，并使用最后一个 ":" 分割地址与端口
      */
     template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     explicit address(StringView addr) {
         std::string_view sv = addr;
         std::size_t idx = sv.find_last_of(':');
-        if (idx <= 1) throw std::runtime_error("failed to parse address: colon not found");
-
-        host_.assign(sv.data(), idx);
+        if (idx == sv.npos) throw std::runtime_error("failed to parse: colon not found");
+        // 忽略 IPv6 的包裹括号
+        if (sv[0] == '[') host_.assign(sv.data() + 1, idx - 2);
+        else host_.assign(sv.data(), idx);
         port_ = std::atoi(&sv[idx + 1]);
     }
     /**
@@ -51,12 +53,11 @@ public:
     }
     // 复制并返回完整的地址
     std::string str() const {
-        std::string str;
-        str.resize(host_.size() + 8);
-        std::size_t len = std::sprintf(const_cast<char*>(str.data()), "%s:%u", host_.c_str(), port_);
-        str.resize(len);
-        return str;
+        std::stringstream ss;
+        ss << *this;
+        return ss.str();
     }
+    // 重新赋值
     template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     address& operator =(StringView s) {
         address addr {s};
@@ -80,6 +81,13 @@ public:
         if (host_ < addr.host_) return true;
         if (port_ < addr.port_) return true;
         return false;
+    }
+    //
+    friend std::ostream& operator<<(std::ostream& os, const address& addr) {
+        std::string_view sv = addr.host_;
+        // 含有 ":" 按照 IPv6 地址处理
+        if (sv.find_first_of(':') != sv.npos) return os << "[" << addr.host_ << "]:" << addr.port_;
+        else return os << "" << addr.host_ << ":" << addr.port_;
     }
 };
 
