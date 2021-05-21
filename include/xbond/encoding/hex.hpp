@@ -1,5 +1,5 @@
 #pragma once
-#include "../utility/data_view.hpp"
+#include "../detail/data_view.hpp"
 #include <string>
 
 namespace xbond {

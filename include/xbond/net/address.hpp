@@ -1,5 +1,6 @@
 #pragma once
 #include "../vendor.h"
+#include "../detail/to_string_view.hpp"
 
 namespace xbond {
 namespace net {
@@ -18,9 +19,9 @@ public:
      * @param addr 地址信息，例如 www.qq.com:443 或 127.0.0.1:8080 或 [ff::127::1]:8080 或 ff::127::1:8080
      * 注意，这里允许 IPv6 地址不使用 [] 包裹，并使用最后一个 ":" 分割地址与端口
      */
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    explicit address(StringView addr) {
-        std::string_view sv = addr;
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    explicit address(S addr) {
+        std::string_view sv = detail::to_string_view(addr);
         std::size_t idx = sv.find_last_of(':');
         if (idx == sv.npos) throw std::runtime_error("failed to parse: colon not found");
         // 忽略 IPv6 的包裹括号
@@ -31,10 +32,10 @@ public:
     /**
      * 指定域名或IP地址及端口构建完整地址信息
      */
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    address(StringView host, std::uint16_t port)
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    address(S host, std::uint16_t port)
     : port_(port) {
-        std::string_view sv = host;
+        std::string_view sv = detail::to_string_view(host);
         host_.assign(sv.data(), sv.size());
     }
 
@@ -58,8 +59,8 @@ public:
         return ss.str();
     }
     // 重新赋值
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    address& operator =(StringView s) {
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    address& operator =(S s) {
         address addr {s};
         host_ = addr.host_;
         port_ = addr.port_;

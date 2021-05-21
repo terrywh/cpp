@@ -1,5 +1,5 @@
 #pragma once
-#include "../utility/data_view.hpp"
+#include "../detail/data_view.hpp"
 #include <string>
 #include <openssl/evp.h>
 // extern "C" EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);

@@ -1,6 +1,6 @@
 #pragma once
 #include "../vendor.h"
-#include "../utility/data_view.hpp"
+#include "../detail/data_view.hpp"
 #include <openssl/sha.h>
 
 namespace xbond {
@@ -13,9 +13,9 @@ class sha256 {
         SHA256_Init(&hash_);
     }
     // （继续）计算数据区块
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    void update(StringView s) {
-        std::string_view sv = s;
+    template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
+    void update(DataView data) {
+        detail::data_view sv = data;
         SHA256_Update(&hash_, sv.data(), sv.size());
     }
     // （继续）计算数据区块

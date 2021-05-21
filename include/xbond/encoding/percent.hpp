@@ -1,4 +1,5 @@
 #pragma once
+#include "../detail/to_string_view.hpp"
 #include <iterator>
 #include <boost/algorithm/hex.hpp>
 
@@ -31,9 +32,9 @@ class percent {
         return j;
     }
     // 编码指定数据并返回
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    static std::string encode(const StringView& s) {
-        std::string_view sv = s;
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    static std::string encode(const S& s) {
+        std::string_view sv = detail::to_string_view(s);
         std::string str;
         str.reserve(sv.size() * 2);
         encode(sv.data(), sv.data() + sv.size(),
@@ -69,9 +70,9 @@ class percent {
         return j;
     }
     // 解码
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    static std::string decode(const StringView& s) {
-        std::string_view sv = s;
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    static std::string decode(const S& s) {
+        std::string_view sv = detail::to_string_view(s);
         std::string str;
         str.reserve(sv.size());
         decode(sv.data(), sv.data() + sv.size(), std::back_insert_iterator<std::string>(str));

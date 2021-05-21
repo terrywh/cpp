@@ -1,6 +1,6 @@
 #pragma once
 #include "../vendor.h"
-#include "../utility/data_view.hpp"
+#include "../detail/data_view.hpp"
 #include <openssl/sha.h>
 
 namespace xbond {

@@ -1,5 +1,6 @@
 #pragma once
 #include "../vendor.h"
+#include "../detail/to_string_view.hpp"
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/json/basic_parser_impl.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -180,10 +181,10 @@ class json {
     }
     // 结合 boost::json::parse 的解析与 boost::property_tree::ptree 容器
     // 允许用户使用带注释、结尾逗号的 JSON 数据
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    static void decode(StringView json, boost::property_tree::ptree& conf,
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    static void decode(S json, boost::property_tree::ptree& conf,
         const boost::json::parse_options& options = default_parse_options()) {
-        std::string_view sv = json;
+        std::string_view sv = detail::to_string_view(json);
         boost::system::error_code error;
         parser_type parser(options, conf);
         parser.write_some(false, sv.data(), sv.size(), error);
@@ -192,10 +193,10 @@ class json {
     }
     // 结合 boost::json::parse 的解析
     // 允许用户使用带注释、结尾逗号的 JSON 数据
-    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
-    static boost::json::value decode(StringView json,
+    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    static boost::json::value decode(S json,
         const boost::json::parse_options& options = default_parse_options()) {
-        std::string_view sv = json;
+        std::string_view sv = detail::to_string_view(json);
         boost::system::error_code error;
         boost::json::parser parser(boost::json::storage_ptr{}, options);
         parser.write(sv.data(), sv.size(), error);
