@@ -16,10 +16,8 @@ elseif (NOT DEFINED VENDOR_OPENSSL)
     set(VENDOR_OPENSSL /data/vendor/openssl-1.1)
 endif()
 
-add_library(xbond STATIC
-    src/log/logger.cpp
-    src/net/detail/netlink_route.cpp
-    src/snowflake.cpp)
+file(GLOB_RECURSE XBOND_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} "src/*.cpp")
+add_library(xbond STATIC ${XBOND_SOURCES})
 target_include_directories(xbond
     PUBLIC include
     PUBLIC vendor/gsl/include
@@ -36,15 +34,7 @@ target_link_libraries(xbond
     ssl crypto
     pthread)
 
-add_executable(xbond-test
-    test/core_coroutine.cpp
-    test/core.cpp
-    test/encoding.cpp
-    test/hash.cpp
-    test/log.cpp
-    test/main.cpp
-    test/net.cpp
-    test/strconv.cpp
-    test/time.cpp)
+file(GLOB_RECURSE XBOND_TEST_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} "test/*.cpp")
+add_executable(xbond-test ${XBOND_TEST_SOURCES})
 # add_dependencies(xbond-test xbond)
 target_link_libraries(xbond-test xbond)
