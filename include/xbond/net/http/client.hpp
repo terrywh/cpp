@@ -33,7 +33,7 @@ public:
         boost::beast::http::response<RspBody, RspFields>& rsp,
         coroutine_handler& ch) {
         
-        boost::system::error_code error, &ec = ch;
+        boost::system::error_code& error = ch.error();
         if (address_ != addr) {
             if (stream_.socket().is_open()) stream_.close();
             address_ = addr;
@@ -49,21 +49,15 @@ public:
                 ep = rs;
                 ch.resume(error);
             });
-            ch.yield(error);
-            if (error) {
-                ec = error;
-                return;
-            }
+            ch.yield();
+            if (error) return;
             // 建立连接
             boost::beast::get_lowest_layer(stream_).async_connect(ep, 
                 [&ch] (const boost::system::error_code& error, boost::asio::ip::tcp::resolver::endpoint_type ep) {
                 ch.resume(error);
             });
-            ch.yield(error);
-            if (error) {
-                ec = error;
-                return;
-            }
+            ch.yield();
+            if (error) return;
             boost::asio::ip::tcp::socket::keep_alive keep_alive(true);
             boost::beast::get_lowest_layer(stream_).socket().set_option(keep_alive);
         }
@@ -71,19 +65,13 @@ public:
         // 发送请求
         req.prepare_payload();
         boost::beast::http::async_write(stream_, req, ch[error]);
-        if (error) {
-            // TODO(terryhaowu): 复用的连接可能已失效，需要处理 EPIPE 问题 重试
-            ec = error;
-            return;
-        }
+        if (error) return;
+        // TODO(terryhaowu): 复用的连接可能已失效，需要处理 EPIPE 问题 重试
         // 接收响应
          boost::beast::http::async_read(stream_, buffer_, rsp, ch[error]);
-        if (error) {
-            // TODO(terryhaowu): 处理 error == boost::asio::error::operation_aborted 停止
-            // TODO(terryhaowu): 处理 boost::asio::error::eof / http::error::end_of_stream 重试
-            ec = error;
-            return;
-        }
+        if (error) return;
+        // TODO(terryhaowu): 处理 error == boost::asio::error::operation_aborted 停止
+        // TODO(terryhaowu): 处理 boost::asio::error::eof / http::error::end_of_stream 重试
         stream_.expires_never();
         if (rsp.need_eof()) stream_.close();
     }

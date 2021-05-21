@@ -6,6 +6,7 @@
 using namespace xbond;
 
 extern int net_tcp_server_test(int argc, char* argv[]); 
+extern int test_net_http_client(int argc, char* argv[]);
 
 int net_netlink_route_list_device_test(int argc, char* argv[]) {
     std::cout << __func__ << "\n";
@@ -39,4 +40,6 @@ int net_test(int argc, char* argv[]) {
     net_hardware_address_test(argc, argv);
     std::cout << "\t";
     net_tcp_server_test(argc, argv);
+    std::cout << "\t";
+    test_net_http_client(argc, argv);
 }

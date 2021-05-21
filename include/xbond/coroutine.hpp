@@ -9,8 +9,8 @@ class basic_coroutine_error_proxy {
  public:
     basic_coroutine_error_proxy(std::variant<std::error_code*, boost::system::error_code*> v)
     : v_(v) {}
-    operator std::error_code() { return *std::get<std::error_code*>(v_); }
-    operator boost::system::error_code() { return *std::get<boost::system::error_code*>(v_); }
+    operator std::error_code&() { return *std::get<std::error_code*>(v_); }
+    operator boost::system::error_code&() { return *std::get<boost::system::error_code*>(v_); }
 };
 // 协程处理器
 template <class C>
@@ -88,7 +88,7 @@ public:
     }
 
     basic_coroutine_error_proxy error() {
-        assert(error_);
+        if (!error_) throw std::runtime_error("error not set");
         return {error_.value()};
     }
 
