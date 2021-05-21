@@ -1,42 +1,20 @@
 #pragma once
-#include "../vendor.h"
-#include "../type_traits.hpp"
-#include "detail/netlink_address.hpp"
-#include <boost/process/environment.hpp>
+#include "../../vendor.h"
+#include "../device_info.hpp"
+#include "netlink_route_query.hpp"
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <iostream>
 
 namespace xbond {
 namespace net {
+namespace detail {
 
-class netlink_route_query_get_link;
-class netlink_route_query_get_addr;
+
 
 class netlink_route {
  public:
-    struct device {
-        int             idx;
-        std::string    name;
-        hw_address       hw;
-        std::optional<ip_address_v4> v4;
-        std::optional<ip_address_v6> v6;
-    };
-
-    class attribute {
-        const char* data_;
-        std::size_t size_;
-
-        attribute(void* data, std::size_t size)
-        : data_(static_cast<const char*>(data)), size_(size) {}
-
-    public:
-        const char* data() { return data_; };
-        std::size_t size() { return size_; }
-        friend class netlink_route;
-    };
-
+    
  private:
     static unsigned int seq_;
     unsigned int pid_;
@@ -45,7 +23,7 @@ class netlink_route {
     char buffer_[8192];
 
     template <class RouteQuery>
-    void execute_query(std::map<int, netlink_route::device>& device) {
+    void execute_query(std::map<int, device_info>& device) {
         std::memset(buffer_, 0, sizeof(buffer_));
 
         RouteQuery query;
@@ -121,65 +99,22 @@ class netlink_route {
     // 遍历设备信息（回调存在返回值）
     template <class Handler>
     void foreach_device(Handler&& cb) {
-        std::map<int, netlink_route::device> device;
+        std::map<int, device_info> device;
         // 执行查询
         execute_query<netlink_route_query_get_link>(device);
         execute_query<netlink_route_query_get_addr>(device);
         // 
-        for (auto i=device.begin(); i!=device.end(); ++i) 
-            if (!static_cast<bool>(cb(i->second))) break;
-    }
-};
-
-
-struct netlink_route_query_get_addr {
-    constexpr std::uint16_t type() { return RTM_GETADDR; }
-    using payload_type = struct ifaddrmsg;
-    using attribute_type = netlink_route::attribute;
-    void setup(payload_type* payload) {
-        payload->ifa_family = AF_PACKET;
-    }
-    int parse(payload_type* payload) {
-        return payload->ifa_index;
-    }
-    void parse(unsigned short type, attribute_type attr, netlink_route::device& info) {
-        if (type == IFA_LABEL) {
-            info.name = std::string{attr.data(), std::min(attr.size(), std::strlen(attr.data()))};
-        }
-        else if (type == IFA_ADDRESS) {
-            if (attr.size() > 10) {
-                ip_address_v6 v6;
-                std::memcpy(v6.data(), attr.data(), 16);
-                info.v6 = v6;
-            }
-            else {
-                ip_address_v4 v4;
-                std::memcpy(v4.data(), attr.data(), 4);
-                info.v4 = v4;
+        for (auto i=device.begin(); i!=device.end(); ++i) {
+            if constexpr (std::is_convertible<typename std::invoke_result<Handler, device_info>::type, bool>::value) {
+                if (!static_cast<bool>(cb(i->second))) break;
+            } else {
+                cb(i->second);
             }
         }
     }
 };
 
-struct netlink_route_query_get_link {
-    constexpr std::uint16_t type() { return RTM_GETLINK; }
-    using payload_type = struct ifinfomsg;
-    using attribute_type = netlink_route::attribute;
-    void setup(payload_type* payload) {
-        payload->ifi_family = AF_PACKET;
-        payload->ifi_change = 0xffffffff; // according to man docs
-    }
-    int parse(payload_type* payload) {
-        return payload->ifi_index;
-    }
-    void parse(unsigned short type, attribute_type attr, netlink_route::device& info) {
-        if (type == IFLA_IFNAME)
-            info.name = std::string{attr.data(), std::min(attr.size(), std::strlen(attr.data()))};
-        else if (type == IFLA_ADDRESS)
-            std::memcpy(info.hw.data(), attr.data(), 6);
-    }
-};
 
-
+} // namespace detail
 } // namespace net
 } // namespace xbond

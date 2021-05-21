@@ -7,10 +7,14 @@ namespace net {
  * 简单封装地址信息，用于分离域名/地址和端口
  */
 class address {
+    std::string   host_;
+    std::uint16_t port_;
+
 public:
     address()
     : host_(""), port_(0u) {}
     /**
+     * 分割 ":" IP 地址与端口
      * @param addr 地址信息，例如 www.qq.com:443 或 127.0.0.1:8080
      */
     template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
@@ -22,9 +26,15 @@ public:
         host_.assign(sv.data(), idx);
         port_ = std::atoi(&sv[idx + 1]);
     }
-
-    address(const std::string& host, std::uint16_t port)
-    : host_(host.data(), host.size()), port_(port) {}
+    /**
+     * 指定域名或IP地址及端口构建完整地址信息
+     */
+    template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
+    address(StringView host, std::uint16_t port)
+    : port_(port) {
+        std::string_view sv = host;
+        host_.assign(sv.data(), sv.size());
+    }
 
     address(const address& addr) = default;
     // 域名/地址
@@ -39,6 +49,7 @@ public:
         str.resize(len);
         return str;
     }
+    // 复制并返回完整的地址
     std::string str() const {
         std::string str;
         str.resize(host_.size() + 8);
@@ -64,9 +75,12 @@ public:
     bool operator !=(const address& addr) const {
         return port_ != addr.port_ || host_ != addr.host_;
     }
-private:
-    std::string   host_;
-    std::uint16_t port_;
+    // 实现 Comparable 可比较
+    bool operator <(const address& addr) const {
+        if (host_ < addr.host_) return true;
+        if (port_ < addr.port_) return true;
+        return false;
+    }
 };
 
 } // namespace net

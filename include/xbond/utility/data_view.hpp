@@ -28,26 +28,26 @@ struct is_data_container {
  * 与 string_view 类似，但用于二进制数据
  */
 class data_view {
-    const void* data_;
+    const char* data_;
     std::size_t size_;
 
  public:
     data_view(const void* data, std::size_t size)
-    : data_(data), size_(size) {}
+    : data_(static_cast<const char*>(data)), size_(size) {}
 
     data_view(const void* begin, const void* end)
-    : data_(begin), size_(static_cast<const char*>(end) - static_cast<const char*>(begin)) {}
+    : data_(static_cast<const char*>(begin)), size_(static_cast<const char*>(end) - static_cast<const char*>(begin)) {}
 
     template <class Container, typename = typename std::enable_if<is_data_container<Container>::value, Container>::type>
-    data_view(Container c)
-    : data_(c.data()), size_(c.size() * sizeof(typename Container::value_type)) {}
+    data_view(const Container& c)
+    : data_(static_cast<const char*>(static_cast<const void*>(c.data()))), size_(c.size() * sizeof(typename Container::value_type)) {}
 
     template <class Element, std::size_t N>
     data_view(Element (&array)[N])
     : data_(array), size_(N * sizeof(Element)) {}
     // TODO: 支持更多形态的构建（转换机制）
     // 二进制数据指针
-    const void* data() const { return data_; }
+    const char* data() const { return data_; }
     // 二进制数据大小（字节数）
     std::size_t size() const { return size_; }
 

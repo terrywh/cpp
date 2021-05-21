@@ -1,5 +1,8 @@
 #include <xbond/net/server.hpp>
+#include <xbond/net/address.hpp>
 using namespace xbond;
+
+#define LOGGER() std::cout << "\t"
 
 class session;
 
@@ -23,9 +26,9 @@ void session::run(coroutine_handler& ch) {
         boost::asio::async_write(socket_, boost::asio::buffer(buffer, length), ch[error]);
         if (error) break;
     }
-    std::cout << "\t\tsession: close\n";
+    LOGGER() << "\tsession: close\n";
     echo_server->close();
-    std::cout << "\t\tserver:  close\n";
+    LOGGER() << "\tserver:  close\n";
 }
 
 class echo_once: public std::enable_shared_from_this<echo_once> {
@@ -47,19 +50,20 @@ class echo_once: public std::enable_shared_from_this<echo_once> {
             if (error) return;
             std::array<char, 4096> rbuffer;
             std::size_t length = socket_.async_read_some(boost::asio::buffer(rbuffer), ch[error]);
-            std::cout << length << "(" << std::string_view{rbuffer.data(), length} << ")\n";
+            LOGGER() << "\t" << length << " (" << std::string_view{rbuffer.data(), length} << ")\n";
             socket_.close();
-            std::cout << "\t\tclient:  close\n";
+            LOGGER() << "\tclient:  close\n";
         });
     }
 };
 
 int net_tcp_server_test(int argc, char* argv[]) {
-    std::cout << __func__ << "\n\t\t";
+    LOGGER() << __func__ << "\n";
     boost::asio::io_context io;
-    echo_server = net::make_server<session>(io, {boost::asio::ip::make_address("127.0.0.1"), 8888});
+    echo_server = net::make_server<session>(io, net::address{"127.0.0.1:8888"});
     echo_server->start();
     auto echo_client = std::make_shared<echo_once>(io);
-    echo_client->start({boost::asio::ip::make_address("127.0.0.1"), 8888});
+    echo_client->start(net::address{"127.0.0.1:8888"});
     io.run();
+    return 0;
 }

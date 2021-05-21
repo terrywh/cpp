@@ -4,7 +4,7 @@
 
 namespace xbond {
 namespace strconv {
-
+// string -> uint64_t
 template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
 std::uint64_t str2ul(StringView str) {
     std::string_view sv = str;
@@ -12,7 +12,7 @@ std::uint64_t str2ul(StringView str) {
     boost::spirit::qi::parse(sv.data(), sv.data() + sv.size(), boost::spirit::qi::ulong_, n);
     return n;
 }
-
+// string -> uint32_t
 template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
 std::uint32_t str2ui(StringView str) {
     std::string_view sv = str;
@@ -20,7 +20,7 @@ std::uint32_t str2ui(StringView str) {
     boost::spirit::qi::parse(sv.data(), sv.data() + sv.size(), boost::spirit::qi::uint_, n);
     return n;
 }
-
+// string -> uint16_t
 template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
 std::uint16_t str2us(StringView str) {
     std::string_view sv = str;
@@ -28,7 +28,7 @@ std::uint16_t str2us(StringView str) {
     boost::spirit::qi::parse(sv.data(), sv.data() + sv.size(), boost::spirit::qi::ushort_, n);
     return n;
 }
-
+// string -> uint8_t
 template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
 std::uint8_t str2uc(StringView str) {
     std::string_view sv = str;

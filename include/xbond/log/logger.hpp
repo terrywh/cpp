@@ -46,17 +46,18 @@ class logger {
         enum {
             STATUS_ONCE = 0x01,
         };
+        // 禁止复制
         record(const record& r) = delete;
-
+        // 销毁时发送给 logger 存储记录
         ~record() {
             stream_.put('\n');
             logger_.send_record(*this);
         }
-
+        // 输出流
         std::ostream& stream() {
             return stream_;
         }
-
+        // 用于禁止同一 Record 对象被多次使用
         operator bool() {
             bool s = !(status_ & STATUS_ONCE);
             status_ |= STATUS_ONCE;
@@ -82,10 +83,13 @@ class logger {
         std::cout.write(data, size);
         std::cout.flush();
     }, zone_offset) {}
-    //
+    // 打开一个记录
     record open_record(level_type lvl);
+    // 发送一个记录（输出）
     void   send_record(record& record);
+    // 获取一个记录时间
     std::chrono::system_clock::time_point time_record() const;
+    // 替换当前日志对象的输出回调
     template <class Writer>
     void writer(Writer&& w) {
         static_assert(is_writer<Writer>::value, "Writer requirement does NOT match");

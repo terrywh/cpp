@@ -1,16 +1,16 @@
 #pragma once
 #include "../vendor.h"
-#include "netlink_route.hpp"
+#include "device.hpp"
 
 namespace xbond {
 namespace net {
-
+// 物理地址（MAC）
 class hardware_address {
 public:
     using value_type = std::array<std::uint8_t, 6>;
+    // 尝试获取当前机器的物理地址
     hardware_address() {
-        netlink_route nr;
-        nr.foreach_device([this] (const netlink_route::device& device) -> bool {
+        foreach_device([this] (const device_info& device) -> bool {
             if (device.name[0] == 'e') {
                 hwaddr_ = device.hw;
                 return false;
@@ -18,19 +18,19 @@ public:
             return true;
         });
     }
+    // 以指定数据构建一个物理地址实例
     hardware_address(const value_type& bytes)
     : hwaddr_(bytes) {}
-    //
+    // 物理地址数据
     value_type& bytes() { return hwaddr_; }
-    //
+    // 构建并返回物理地址的文本
     std::string str() const {
         std::stringstream ss;
         ss << *this;
         return ss.str();
     }
-    const char* data() const { return reinterpret_cast<const char*>(hwaddr_.data()); }
-    std::size_t size() const { return hwaddr_.size(); }
-private:
+
+ private:
     value_type hwaddr_;
     friend std::ostream& operator<<(std::ostream& os, const hardware_address& ha) {
         os.setf(std::ios_base::hex, std::ios_base::basefield);

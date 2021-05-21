@@ -11,7 +11,7 @@ class percent {
     static constexpr char HEX_CONVERT_TABLE[] = "0123456789ABCDEF";
 
  public:
-    // 
+    // 编码由遍历器指定的数据区块，并将结果从指定位置输出
     template <class InputIterator, class OutputIterator>
     static OutputIterator encode(InputIterator begin, InputIterator end, OutputIterator to) {
         auto j = to;
@@ -30,7 +30,7 @@ class percent {
         }
         return j;
     }
-    // 
+    // 编码指定数据并返回
     template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     static std::string encode(const StringView& s) {
         std::string_view sv = s;
@@ -40,7 +40,7 @@ class percent {
             std::back_insert_iterator<std::string>(str));
         return str;
     }
-    // 
+    // HEX -> DEC
     static unsigned char htoi(unsigned char s1, unsigned char s2) {
         unsigned char value;
         if (std::isupper(s1)) s1 = std::tolower(s1);
@@ -49,7 +49,7 @@ class percent {
         value |= s2 >= '0' && s2 <= '9' ? s2 - '0' : s2 - 'a' + 10;
         return value;
     }
-    // 
+    // 解码由遍历器指定的区域，并向目标写入解码结果
     template <class InputIterator, class OutputIterator>
     static OutputIterator decode(InputIterator begin, InputIterator end, OutputIterator to) {
         auto j = to;
@@ -68,7 +68,7 @@ class percent {
         }
         return j;
     }
-    // 
+    // 解码
     template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     static std::string decode(const StringView& s) {
         std::string_view sv = s;

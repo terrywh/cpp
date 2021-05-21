@@ -1,18 +1,21 @@
 #include <xbond/net/address.hpp>
+#include <xbond/net/device.hpp>
 #include <xbond/net/hardware_address.hpp>
 #include <xbond/net/local_address.hpp>
 #include <xbond/encoding/hex.hpp>
 #include <iostream>
 using namespace xbond;
 
-extern int net_tcp_server_test(int argc, char* argv[]); 
-extern int test_net_http_client(int argc, char* argv[]);
+#define LOGGER() std::cout
 
-int net_netlink_route_list_device_test(int argc, char* argv[]) {
-    std::cout << __func__ << "\n";
-    net::netlink_route nr;
-    nr.foreach_device([] (const net::netlink_route::device& device) {
-        std::cout << "\t\t" << device.idx << " -> " << encoding::hex::encode(device.hw);
+extern int net_client_test(int argc, char* argv[]);
+extern int net_tcp_server_test(int argc, char* argv[]);
+extern int net_http_test(int argc, char* argv[]);
+
+int net_device_test(int argc, char* argv[]) {
+    LOGGER() << "\t" << __func__ << "\n";
+    net::foreach_device([] (const net::device_info& device) {
+        LOGGER() << "\t\t" << device.idx << " -> " << encoding::hex::encode(device.hw);
         if (device.v4) 
             std::cout << " v4: " << encoding::hex::encode(device.v4.value());
         if (device.v6)
@@ -23,23 +26,23 @@ int net_netlink_route_list_device_test(int argc, char* argv[]) {
 }
 
 int net_hardware_address_test(int argc, char* argv[]) {
-    std::cout << __func__ << "\n";
-    std::cout << "\t\t" << net::hardware_address() << std::endl;
+    std::cout << "\t" << __func__ << "\n";
+    std::cout << "\t\t" << net::hardware_address() << "\n";
     return 0;
 }
 
 int net_test(int argc, char* argv[]) {
-    std::cout << __func__ << "\n";
+    LOGGER() << __func__ << "\n";
     net::address addr("1.1.1.1:2222");
-    std::cout << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << std::endl;
+    LOGGER() << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << "\n";
     addr = "2.2.2.2:3333";
-    std::cout << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << std::endl;
-    std::cout << "\t";
-    net_netlink_route_list_device_test(argc, argv);
-    std::cout << "\t";
+    LOGGER() << "\t" << addr.host() << ":" << addr.port() << "/" << addr.service() << "\n";
+
+    net_device_test(argc, argv);
     net_hardware_address_test(argc, argv);
-    std::cout << "\t";
+    net_client_test(argc, argv);
     net_tcp_server_test(argc, argv);
-    std::cout << "\t";
-    test_net_http_client(argc, argv);
+    net_http_test(argc, argv);
+
+    return 0;
 }

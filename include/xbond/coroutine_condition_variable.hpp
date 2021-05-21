@@ -4,14 +4,14 @@
 #include "coroutine_mutex.hpp"
 
 namespace xbond {
-
+// 同步原语：信号量（简化）
 class coroutine_condition_variable {
     boost::asio::io_context::strand    strand_;
     std::set< std::shared_ptr<coroutine> > co_;
  public:
     coroutine_condition_variable(boost::asio::io_context& io)
     : strand_(io) {}
-    //
+    // 等待
     void wait(coroutine_handler& ch) {
         auto co = ch.co();
         boost::asio::post(strand_, [this, co] () {
@@ -24,14 +24,14 @@ class coroutine_condition_variable {
         });
         ch.yield(); // (2) <- resume
     }
-    //
+    // 唤醒（一个等待中的协程）
     void notify_one() {
         boost::asio::post(strand_, [this] () {
             if (co_.empty()) return;
             (*co_.begin())->resume();
         });
     }
-
+    // 唤醒（所有等待中的协程）
     void notify_all() {
         boost::asio::post(strand_, [this] () {
             for (auto i=co_.begin(); i!=co_.end(); ++i)

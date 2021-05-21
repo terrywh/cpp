@@ -3,7 +3,7 @@
 #include "coroutine_mutex.hpp"
 
 namespace xbond {
-// 协程排他锁
+// 同步原语：协程排他锁
 template <class Mutex>
 class basic_coroutine_unique_lock {
     using mutex_type = typename std::decay<Mutex>::type;
@@ -46,7 +46,7 @@ class basic_coroutine_unique_lock {
     }
 };
 using coroutine_unique_lock = basic_coroutine_unique_lock<coroutine_unique_mutex>;
-// 协程共享锁 
+// 同步原语：协程共享锁 
 template <class Mutex>
 class basic_coroutine_shared_lock {
     using mutex_type = typename std::decay<Mutex>::type;

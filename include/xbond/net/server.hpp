@@ -1,6 +1,5 @@
 #pragma once
 #include "../vendor.h"
-#include "../type_traits.hpp"
 #include "../coroutine.hpp"
 
 namespace xbond {

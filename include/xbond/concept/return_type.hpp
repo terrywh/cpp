@@ -2,6 +2,7 @@
 #include <type_traits>
 
 namespace xbond {
+namespace concept {
 
 template <typename T>
 struct return_type;
@@ -16,4 +17,5 @@ struct return_type<R(C::*)(Args...) volatile> { using type = R; };
 template <typename R, typename C, typename... Args>
 struct return_type<R(C::*)(Args...) const volatile> { using type = R; };
 
+} // namespace concept
 } // namespace xbond

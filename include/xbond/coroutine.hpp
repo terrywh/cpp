@@ -24,13 +24,14 @@ public:
     explicit basic_coroutine_handler(std::shared_ptr<coroutine_type> co)
     : count_(nullptr)
     , co_(co) {}
-    // 复制
+    // 
     basic_coroutine_handler(const basic_coroutine_handler& ch) = default;
-    // 指定错误返回
+    // 指定错误引用（用于从异步流程带回错误）
     basic_coroutine_handler& operator[](boost::system::error_code& error) {
         error_ = &error;
         return *this;
     }
+    // 指定错误返回（用于从异步流程带回错误）
     basic_coroutine_handler& operator[](std::error_code& error) {
         error_ = &error;
         return *this;
@@ -41,7 +42,7 @@ public:
         if (count_) *count_ = count;
         resume();
     }
-    //
+    // 
     const boost::asio::strand<boost::asio::any_io_executor>& executor() const {
         return co_->executor();
     }
@@ -61,10 +62,12 @@ public:
     inline void yield() {
         co_->yield();
     }
+    // 协程暂停（用于从异步流程带回错误信息）
     inline void yield(boost::system::error_code& error) {
         error_ = &error;
         co_->yield();
     }
+    // 协程暂停（用于从异步流程带回错误信息）
     inline void yield(std::error_code& error) {
         error_ = &error;
         co_->yield();
@@ -73,20 +76,21 @@ public:
     inline void resume() {
         co_->resume();
     }
-    // 协程恢复
+    // 协程恢复（带回指定错误信息）
     inline void resume(const boost::system::error_code& error) {
         if (error_) *std::get<boost::system::error_code*>(error_.value()) = error;
         co_->resume();
     }
-    // 协程恢复
+    // 协程恢复（带回指定错误信息）
     inline void resume(const std::error_code& error) {
         if (error_) *std::get<std::error_code*>(error_.value()) = error;
         co_->resume();
     }
+
     inline std::shared_ptr<coroutine_type> co() {
         return co_;
     }
-
+    // 获取当前持有的错误信息
     basic_coroutine_error_proxy error() {
         if (!error_) throw std::runtime_error("error not set");
         return {error_.value()};
@@ -115,7 +119,7 @@ protected:
 
     thread_local static basic_coroutine* current_;
 public:
-    std::shared_ptr<basic_coroutine> current() {
+    static std::shared_ptr<basic_coroutine> current() {
         return current_->shared_from_this();
     }
 
@@ -152,25 +156,30 @@ public:
     void end() {
         co_.end();
     }
-    // 
+    // 启动协程
     template <class Executor, class Handler>
     static void start(const Executor& executor, Handler&& fn, typename std::enable_if<
             boost::asio::is_executor<Executor>::value || boost::asio::execution::is_executor<Executor>::value
         >::type* v = nullptr) {
         initiate(executor, fn);
     }
-    // 
+    // 启动协程
     template <class ExecutionContext, class Handler>
     static void start(ExecutionContext& ctx, Handler&& fn, typename std::enable_if<
             std::is_convertible<ExecutionContext*, boost::asio::execution_context*>::value
         >::type* v = nullptr) {
         initiate(ctx.get_executor(), fn);
     }
-    
-    static void sleep(std::chrono::milliseconds duration, basic_coroutine_handler<basic_coroutine<Hook>>& ch) {
+    // 使协程休眠一段时间
+    static void sleep(std::chrono::steady_clock::duration duration, basic_coroutine_handler<basic_coroutine<Hook>>& ch) {
         boost::asio::steady_timer timer(ch.executor());
         timer.expires_after(duration);
         timer.async_wait(ch);
+    }
+    // 使“当前”协程休眠一段时间
+    static void sleep(std::chrono::steady_clock::duration duration) {
+        basic_coroutine_handler<basic_coroutine<Hook>> ch{current()};
+        sleep(duration, ch);
     }
 
 private:

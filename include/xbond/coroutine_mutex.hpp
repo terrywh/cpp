@@ -3,7 +3,7 @@
 #include "coroutine.hpp"
 
 namespace xbond {
-// 协程信号量
+// 同步原语：协程信号量
 class coroutine_unique_mutex {
  protected:
     boost::asio::io_context::strand    strand_; // 序列化对 co_ 容器的操作

@@ -190,6 +190,8 @@ class json {
         if (error) throw boost::system::system_error(error);
         // parser.done();
     }
+    // 结合 boost::json::parse 的解析
+    // 允许用户使用带注释、结尾逗号的 JSON 数据
     template <class StringView, typename = typename std::enable_if<std::is_convertible<StringView, std::string_view>::value, StringView>::type>
     static boost::json::value decode(StringView json,
         const boost::json::parse_options& options = default_parse_options()) {
@@ -221,7 +223,7 @@ class json {
     static std::string encode(const boost::json::value& json) {
         return boost::json::serialize(json);
     }
-    //
+    // 序列化
     static std::string encode(const boost::property_tree::ptree& json, bool pretty = true) {
         std::stringstream ss;
         write(ss, json, pretty);

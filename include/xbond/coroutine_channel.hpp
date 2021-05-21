@@ -39,6 +39,11 @@ public:
         });
         return *this;
     }
+    // 向 CHANNEL 写入（可能阻塞“当前”协程）
+    basic_coroutine_channel& operator << (const T& obj) {
+        coroutine_handler ch{coroutine::current()};
+        return into(obj, ch);
+    }
     // 从 CHANNEL 读取
     bool from(T& obj, coroutine_handler& ch) {
         while (!queue_.pop(obj)) {
@@ -55,7 +60,12 @@ public:
         });
         return true;
     }
-
+    // 从 CHANNEL 读取（可能阻塞“当前”协程）
+    bool operator >> (T& obj) {
+        coroutine_handler ch{coroutine::current()};
+        return from(obj, ch);
+    }
+    // 关闭
     void close() {
         status_ |= CLOSED;
         boost::asio::post(strand_, [this, self = this->shared_from_this()] () {

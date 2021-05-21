@@ -70,7 +70,7 @@ public:
     inline static std::size_t decode_size(std::size_t size) {
         return (size + 3)/4 * 3;
     }
-
+    // 解码指定数据，并将结果写入目标区域
     template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
     static std::size_t decode(const DataView& str, char* out) {
         detail::data_view dv = str;

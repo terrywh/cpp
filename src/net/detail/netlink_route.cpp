@@ -1,9 +1,11 @@
-#include "../../../include/xbond/net/netlink_route.hpp"
+#include <xbond/net/detail/netlink_route.hpp>
 
 namespace xbond {
 namespace net {
+namespace detail {
 
 unsigned int netlink_route::seq_ = 0;
 
-} // namespace net
 } // namespace detail
+} // namespace net
+} // namespace xbond
