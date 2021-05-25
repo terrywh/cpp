@@ -5,6 +5,7 @@
 #include <boost/json/basic_parser_impl.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/concepts.hpp>
+#include <stack>
 
 namespace xbond {
 namespace encoding {
@@ -33,13 +34,42 @@ class json {
 
     struct parser_handler {
     private:
-        boost::property_tree::ptree& ptree_;
-        ptree_path ppath_;
-        std::string tmp_;
+        struct context_t {
+            boost::property_tree::ptree& node;
+            ptree_path path;
+        };
+        boost::property_tree::ptree& root_;
+        std::stack<context_t> context_;
+        std::string cache_;
+
+        void put(std::string val) {
+            if (context_.top().path.empty()) 
+                context_.top().node.push_back(std::make_pair("", boost::property_tree::ptree{val}));
+            else
+                context_.top().node.put(context_.top().path, val);
+        }
+        void open() {
+            if (context_.empty()) {
+                context_.push(context_t{root_});
+            }
+            else if (context_.top().path.empty()) {
+                auto i = context_.top().node.push_back(std::make_pair("", boost::property_tree::ptree{}));
+                context_.push(context_t{i->second});
+            }
+            else {
+                auto& child = context_.top().node.put_child(context_.top().path, {});
+                context_.push(context_t{child});
+            }
+        }
+        void done() { // 数据项结束，回到父级别键
+            if (!context_.empty() && !context_.top().path.empty()) context_.top().path.pop_back();
+        }
 
     public:
         parser_handler(boost::property_tree::ptree& ptree)
-        : ptree_(ptree) {}
+        : root_(ptree) {
+            
+        }
         /// The maximum number of elements allowed in an array
         static constexpr std::size_t max_array_size = -1;
         /// The maximum number of elements allowed in an object
@@ -51,63 +81,68 @@ class json {
         bool on_document_begin(boost::system::error_code& ec) { return true; }
         bool on_document_end(boost::system::error_code& ec) { return true; }
         bool on_array_begin(boost::system::error_code& ec) {
-            ppath_.push_back("");
+            open();
             return true;
         }
         bool on_array_end(std::size_t n, boost::system::error_code& ec) {
-            ppath_.pop_back();
+            context_.pop();
+            done();
             return true;
         }
-        bool on_object_begin(boost::system::error_code& ec) { return true; }
+        bool on_object_begin(boost::system::error_code& ec) { 
+            open();
+            return true;
+        }
         bool on_object_end(std::size_t n, boost::system::error_code& ec) {
-            if (!ppath_.empty()) ppath_.pop_back();
+            context_.pop();
+            done();
             return true;
         }
         bool on_string_part(boost::string_view s, std::size_t n, boost::system::error_code& ec) {
-            tmp_.append(s.data(), s.size());
+            cache_.append(s.data(), s.size());
             return true;
         }
         bool on_string(boost::string_view s, std::size_t n, boost::system::error_code& ec) {
-            tmp_.append(s.data(), s.size());
-            ptree_.put(ppath_, tmp_);
-            tmp_.clear(); // 新数据项或键直接开始追加
-            ppath_.pop_back(); // 数据项结束，回到父级别键
+            cache_.append(s.data(), s.size());
+            put(cache_);
+            cache_.clear(); // 新数据项或键直接开始追加
+           if (!context_.top().path.empty()) context_.top().path.pop_back(); 
             return true;
         }
         bool on_key_part(boost::string_view s, std::size_t n, boost::system::error_code& ec) {
-            tmp_.append(s.data(), s.size());
+            cache_.append(s.data(), s.size());
             return true;
         }
         bool on_key(boost::string_view s, std::size_t n, boost::system::error_code& ec) {
-            tmp_.append(s.data(), s.size());
-            ppath_.push_back(std::move(tmp_));
-            tmp_.clear();
+            cache_.append(s.data(), s.size());
+            context_.top().path.push_back(std::move(cache_));
+            cache_.clear();
             return true;
         }
         bool on_number_part(boost::string_view s, boost::system::error_code& ec ) { return true; }
         bool on_int64(int64_t i, boost::string_view s, boost::system::error_code& ec) {
-            ptree_.put(ppath_, i);
-            ppath_.pop_back(); // 数据项结束，回到父级别键
+            put({s.data(), s.size()});
+            done();
             return true;
         }
         bool on_uint64(uint64_t u, boost::string_view s, boost::system::error_code& ec ) {
-            ptree_.put(ppath_, u);
-            ppath_.pop_back(); // 数据项结束，回到父级别键
+            put({s.data(), s.size()});
+            done();
             return true;
         }
         bool on_double(double d, boost::string_view s, boost::system::error_code& ec) {
-            ptree_.put(ppath_, d);
-            ppath_.pop_back(); // 数据项结束，回到父级别键
+            put({s.data(), s.size()});
+            done();
             return true;
         }
         bool on_bool(bool b, boost::system::error_code& ec) {
-            ptree_.put(ppath_, b);
-            ppath_.pop_back(); // 数据项结束，回到父级别键
+            put(b ? "true" : "false");
+            done();
             return true;
         }
         bool on_null(boost::system::error_code& ec) {
-            ptree_.put(ppath_, "null");
-            ppath_.pop_back(); // 数据项结束，回到父级别键
+            put("null");
+            done();
             return true;
         }
         bool on_comment_part(boost::string_view s, boost::system::error_code& ec) { return true; }
