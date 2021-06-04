@@ -38,7 +38,7 @@ public:
     }
     // 模拟的回调
     void operator()(const boost::system::error_code& error, std::size_t count = 0) {
-        if (error_) *std::get<boost::system::error_code*>(error_.value()) = error;
+        if (error_.has_value()) *std::get<boost::system::error_code*>(error_.value()) = error;
         if (count_) *count_ = count;
         resume();
     }
@@ -60,30 +60,36 @@ public:
     }
     // 协程暂停
     inline void yield() {
+        assert(co_);
         co_->yield();
     }
     // 协程暂停（用于从异步流程带回错误信息）
     inline void yield(boost::system::error_code& error) {
+        assert(co_);
         error_ = &error;
         co_->yield();
     }
     // 协程暂停（用于从异步流程带回错误信息）
     inline void yield(std::error_code& error) {
+        assert(co_);
         error_ = &error;
         co_->yield();
     }
     // 协程恢复
     inline void resume() {
+        assert(co_);
         co_->resume();
     }
     // 协程恢复（带回指定错误信息）
     inline void resume(const boost::system::error_code& error) {
-        if (error_) *std::get<boost::system::error_code*>(error_.value()) = error;
+        assert(co_);
+        if (error_.has_value()) *std::get<boost::system::error_code*>(error_.value()) = error;
         co_->resume();
     }
     // 协程恢复（带回指定错误信息）
     inline void resume(const std::error_code& error) {
-        if (error_) *std::get<std::error_code*>(error_.value()) = error;
+        assert(co_);
+        if (error_.has_value()) *std::get<std::error_code*>(error_.value()) = error;
         co_->resume();
     }
 
@@ -92,7 +98,7 @@ public:
     }
     // 获取当前持有的错误信息
     basic_coroutine_error_proxy error() {
-        if (!error_) throw std::runtime_error("error not set");
+        if (!error_.has_value()) throw std::runtime_error("error not set");
         return {error_.value()};
     }
 

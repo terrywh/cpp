@@ -82,4 +82,5 @@ int encoding_test(int argc, char* argv[]) {
     encoding_hex_test(argc, argv);
     std::cout << "\t";
     encoding_utf8_test(argc, argv);
+    return 0;
 }

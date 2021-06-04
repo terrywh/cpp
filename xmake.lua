@@ -40,7 +40,7 @@ target("xbond")
 
 target("xbond-test")
     set_kind("binary")
-    add_rules("mode.debug", "mode.release", "mode.releasedbg")
+    add_rules("mode.debug")
     add_deps("xbond")
     add_includedirs("include")
     set_pcxxheader("include/xbond/vendor.h")

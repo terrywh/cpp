@@ -1,5 +1,6 @@
 #include <xbond/net/server.hpp>
 #include <xbond/net/address.hpp>
+#include <xbond/net/async_write.hpp>
 using namespace xbond;
 
 #define LOGGER() std::cout << "\t"
@@ -44,9 +45,10 @@ class echo_once: public std::enable_shared_from_this<echo_once> {
             boost::system::error_code error;
             socket_.async_connect(connect, ch[error]);
             if (error) return;
-            std::array<char, 4096> sbuffer;
-            std::memcpy(sbuffer.data(), "hello", 5);
-            boost::asio::async_write(socket_, boost::asio::buffer(sbuffer, 5), ch[error]);
+            boost::json::value hello {
+                {"hello", "world"},
+            };
+            net::async_write(socket_, hello, ch[error]);
             if (error) return;
             std::array<char, 4096> rbuffer;
             std::size_t length = socket_.async_read_some(boost::asio::buffer(rbuffer), ch[error]);
