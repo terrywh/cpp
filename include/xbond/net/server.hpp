@@ -38,7 +38,7 @@ struct is_tcp_session {
 };
 
 
-template <class Session, typename = typename std::enable_if<is_tcp_session<Session>::value, Session>::type>
+template <class Session>
 class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket     socket_;
@@ -76,7 +76,7 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
     }
 };
 
-template <class Session>
+template <class Session, typename = typename std::enable_if<is_tcp_session<Session>::value, Session>::type>
 std::shared_ptr<tcp_server<Session>> make_server(boost::asio::io_context& io, boost::asio::ip::tcp::endpoint bind) {
     return std::make_shared<tcp_server<Session>>(io, bind);
 }
