@@ -33,6 +33,8 @@ target_link_libraries(xbond
     boost_json boost_filesystem boost_context boost_system
     ssl crypto
     pthread)
+set_target_properties(xbond PROPERTIES
+    POSITION_INDEPENDENT_CODE ON)
 install(TARGETS xbond
     ARCHIVE DESTINATION lib)
 install(DIRECTORY include/xbond DESTINATION include)
