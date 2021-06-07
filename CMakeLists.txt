@@ -33,6 +33,11 @@ target_link_libraries(xbond
     boost_json boost_filesystem boost_context boost_system
     ssl crypto
     pthread)
+install(TARGETS xbond
+    ARCHIVE DESTINATION lib)
+install(DIRECTORY include/xbond DESTINATION include)
+install(DIRECTORY vendor/gsl/include/gsl DESTINATION include)
+install(DIRECTORY vendor/date/include/date DESTINATION include)
 
 file(GLOB_RECURSE XBOND_TEST_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} "test/*.cpp")
 add_executable(xbond-test ${XBOND_TEST_SOURCES})
