@@ -1,11 +1,11 @@
 #pragma once
 #include "../vendor.h"
 
-namespace xbond {
-namespace log {
-
 #define XBOND_LOGGER_RECORD_STREAM(_logger_, _level_) for (auto record = \
     (_logger_).open_record(xbond::log::logger::_level_); !!record;) record.stream()
+
+namespace xbond {
+namespace log {
 
 /**
  * 判定类型是否可被用于日志输出

@@ -1,6 +1,7 @@
 #pragma once
 #include "../detail/data_view.hpp"
 #include <string>
+#include <openssl/opensslv.h>
 #include <openssl/evp.h>
 // extern "C" EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
 
@@ -37,8 +38,12 @@ public:
         detail::data_view dv = str;
         int len;
         unsigned char *o, *b = o = reinterpret_cast<unsigned char*>(out);
-
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
         EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
+#else
+        EVP_ENCODE_CTX  ctx_;
+        EVP_ENCODE_CTX* ctx = &ctx_;
+#endif
         EVP_EncodeInit(ctx);
         EVP_EncodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(dv.data()), dv.size());
         o += len;
@@ -76,8 +81,12 @@ public:
         detail::data_view dv = str;
         int len;
         unsigned char *o, *b = o = reinterpret_cast<unsigned char*>(out);
-
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
         EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
+#else
+        EVP_ENCODE_CTX  ctx_;
+        EVP_ENCODE_CTX* ctx = &ctx_;
+#endif
         EVP_DecodeInit(ctx);
         EVP_DecodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(dv.data()), dv.size());
         o += len;

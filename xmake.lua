@@ -1,5 +1,5 @@
 set_project("ark_proxy")
-set_languages("c11","cxx17")
+set_languages("c17","cxx17")
 
 if (not vendor) 
 then 
