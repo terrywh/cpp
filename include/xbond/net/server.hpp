@@ -74,6 +74,9 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
         acceptor_.close();
         socket_.close();
     }
+    boost::asio::ip::tcp::endpoint local_endpoint() {
+        return acceptor_.local_endpoint();
+    }
 };
 
 template <class Session, typename = typename std::enable_if<is_tcp_session<Session>::value, Session>::type>
