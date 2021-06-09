@@ -39,7 +39,7 @@ file_writer::file_writer(const char* file, bool create_directory) {
         boost::filesystem::create_directories(path.parent_path());
     }
     // 打开文件
-    file_ = std::make_shared<std::ofstream>(file, std::ios::out | std::ios::ate);
+    file_ = std::make_shared<std::ofstream>(file, std::ios_base::ate | std::ios_base::out | std::ios_base::app);
     if (!file_->is_open()) 
         throw std::runtime_error("cannot create/open file for append");
 }
