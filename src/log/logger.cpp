@@ -33,7 +33,7 @@ logger::record::~record() {
     r_ = nullptr;
 }
 
-logger::logger(writer_t writer, std::chrono::hours offset)
+logger::logger(std::chrono::hours offset)
 : wguard_(ctx_.get_executor())
 , worker_(logger::run, &ctx_)
 , offset_(offset) {

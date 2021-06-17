@@ -67,7 +67,7 @@ class logger {
 
         friend class logger;
     };
-    logger(writer_t w = cout_writer{}, std::chrono::hours offset = std::chrono::hours(8));
+    logger(std::chrono::hours offset = std::chrono::hours(8));
     ~logger();
     // 打开一个记录
     record open_record(int level) {
