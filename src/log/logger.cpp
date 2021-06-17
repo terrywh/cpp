@@ -1,52 +1,57 @@
 #include <xbond/log/logger.hpp>
+#include <xbond/log/detail/record.hpp>
 #include <xbond/time/date.hpp>
 #include <xbond/time/delta_clock.hpp>
 
 namespace xbond {
 namespace log {
 
-static const char* logger_level_strs[] = {
+static time::delta_clock record_time;
+static const char*       record_name[] = {
     "DEBUG","TRACE","INFO","WARN","ERROR","FATAL"
 };
 
-logger::record::record(logger& logger, level_type level)
-: logger_(logger), status_(0) {
-    auto tp = logger.time_record();
+logger::record::record(logger& l, int level, std::chrono::hours zone)
+: l_(l)
+, status_(0) { // 使用内存池构建实际 record 对象
+    r_ = std::make_shared<detail::record>();
+
+    std::chrono::system_clock::time_point tp = record_time; // 获取一个记录时间
     auto dp = time::floor<time::days>(tp);
+    stream() << "[" << time::year_month_day(dp) << " "
+        << time::make_time(std::chrono::duration_cast<std::chrono::milliseconds>(tp-dp+zone))
+        << "] (" << record_name[level] << ") ";
+}
+
+std::ostream& logger::record::stream() {
+    return r_->stream();
+}
+
+logger::record::~record() {
+    r_->stream().put('\n');
+    l_.send_record(r_);
+    r_ = nullptr;
+}
+
+logger::logger(writer_t writer, std::chrono::hours offset)
+: wguard_(ctx_.get_executor())
+, worker_(logger::run, &ctx_)
+, offset_(offset) {
     
-    stream_ << "[" << time::year_month_day(dp) << " "
-        << time::make_time(std::chrono::duration_cast<std::chrono::milliseconds>(tp-dp+logger.offset_))
-        << "] (" << logger_level_strs[static_cast<int>(level)] << ") ";
 }
 
-logger::record logger::open_record(level_type lvl) {
-    return logger::record(*this, lvl);
-}
-//
-void logger::send_record(record& record) {
-    auto str = record.stream_.str();
-    writer_(str.data(), str.size());
+logger::~logger() {
+    wguard_.reset();
+    worker_.join();
 }
 
-std::chrono::system_clock::time_point logger::time_record() const {
-    static time::delta_clock clock;
-    return clock;
-}
+static cout_writer default_writer;
 
-file_writer::file_writer(const char* file, bool create_directory) {
-    if (create_directory) {
-        boost::filesystem::path path(file);
-        boost::filesystem::create_directories(path.parent_path());
-    }
-    // 打开文件
-    file_ = std::make_shared<std::ofstream>(file, std::ios_base::ate | std::ios_base::out | std::ios_base::app);
-    if (!file_->is_open()) 
-        throw std::runtime_error("cannot create/open file for append");
-}
-
-void file_writer::operator()(const char* data, std::size_t size) {
-    file_->write(data, size);
-    file_->flush(); // 按写入条目输出
+void logger::send_record(std::shared_ptr<basic_record> r) {
+    boost::asio::post(ctx_, [this, record = r] () { // 当前对象不会提前销毁（等待 io_context 运行完毕）
+        if (writer_.empty()) default_writer(record);
+        else for (auto& writer : writer_) writer(record);
+    });
 }
 
 } // namespace log
