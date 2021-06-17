@@ -77,6 +77,7 @@ class logger {
 
     // 输出方法
     void append(writer_t writer) { writer_.emplace_back(std::move(writer)); }
+    void clear() { writer_.clear(); }
     // 时区偏移
     void offset(std::chrono::hours offset) { offset_ = offset; }
     std::chrono::hours offset() const { return offset_; }
