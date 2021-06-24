@@ -15,11 +15,11 @@ logger::record::record(logger& l, int level, std::chrono::hours zone)
 : l_(l)
 , status_(0) { // 使用内存池构建实际 record 对象
     r_ = std::make_shared<detail::record>();
-
-    std::chrono::system_clock::time_point tp = record_time; // 获取一个记录时间
+    // 获取一个记录时间并补充时区偏移
+    std::chrono::system_clock::time_point tp = static_cast<std::chrono::system_clock::time_point>(record_time) + zone; 
     auto dp = time::floor<time::days>(tp);
     stream() << "[" << time::year_month_day(dp) << " "
-        << time::make_time(std::chrono::duration_cast<std::chrono::milliseconds>(tp-dp+zone))
+        << time::make_time(std::chrono::duration_cast<std::chrono::milliseconds>(tp-dp))
         << "] (" << record_name[level] << ") ";
 }
 
