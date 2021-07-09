@@ -48,7 +48,7 @@ class client_execute_context: public boost::asio::coroutine {
         stream_.expires_never();
         // 连接回收复用
         if (rsp_.need_eof()) stream_.close();
-        else manager_->release(address_, stream_, std::move(self));
+        else BOOST_ASIO_CORO_YIELD manager_->release(address_, stream_, std::move(self));
         // 成功响应回调
         self.complete({});
     }}
