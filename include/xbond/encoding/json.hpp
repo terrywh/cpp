@@ -28,8 +28,8 @@ extern boost::json::value read(std::istream& is,
     const boost::json::parse_options& options = default_parse_options());
 // 结合 boost::json::parse 的解析与 boost::property_tree::ptree 容器
 // 允许用户使用带注释、结尾逗号的 JSON 数据
-template <class S, typename = typename std::enable_if<xbond::detail::to_string_view_invokable<S>::value, S>::type>
-static void decode(S json, boost::property_tree::ptree& conf,
+template <class S, typename = typename std::enable_if<xbond::detail::convertible_to_string_view<S>::value, S>::type>
+static void decode(const S& json, boost::property_tree::ptree& conf,
     const boost::json::parse_options& options = default_parse_options()) {
     std::string_view sv = xbond::detail::to_string_view(json);
     boost::system::error_code error;
@@ -40,8 +40,8 @@ static void decode(S json, boost::property_tree::ptree& conf,
 }
 // 结合 boost::json::parse 的解析
 // 允许用户使用带注释、结尾逗号的 JSON 数据
-template <class S, typename = typename std::enable_if<xbond::detail::to_string_view_invokable<S>::value, S>::type>
-static boost::json::value decode(S json,
+template <class S, typename = typename std::enable_if<xbond::detail::convertible_to_string_view<S>::value, S>::type>
+static boost::json::value decode(const S& json,
     const boost::json::parse_options& options = default_parse_options()) {
     std::string_view sv = xbond::detail::to_string_view(json);
     boost::system::error_code error;

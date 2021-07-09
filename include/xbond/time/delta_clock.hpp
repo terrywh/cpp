@@ -10,6 +10,10 @@ namespace time {
         DIFF_TYPE diff_; // 差距精度：毫秒
 
      public:
+        static basic_delta_clock& get() {
+            static basic_delta_clock clock;
+            return clock;
+        }
         // 构建，可选远端参照时间
         explicit basic_delta_clock(std::chrono::milliseconds remote =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())) {

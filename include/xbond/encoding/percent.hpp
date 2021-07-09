@@ -32,7 +32,7 @@ class percent {
         return j;
     }
     // 编码指定数据并返回
-    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
     static std::string encode(const S& s) {
         std::string_view sv = detail::to_string_view(s);
         std::string str;
@@ -70,7 +70,7 @@ class percent {
         return j;
     }
     // 解码
-    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
+    template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
     static std::string decode(const S& s) {
         std::string_view sv = detail::to_string_view(s);
         std::string str;

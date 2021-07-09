@@ -11,7 +11,7 @@ option("vendor-boost")
     after_check(function(option)
         option:add("sysincludedirs","$(vendor-boost)/include", {public = true})
         option:add("linkdirs","$(vendor-boost)/lib")
-        option:add("syslinks", "boost_json", "boost_filesystem", "boost_context", "boost_system")
+        option:add("syslinks", "boost_json", "boost_log", "boost_filesystem", "boost_context", "boost_thread", "boost_system")
     end)
 --
 option("vendor-openssl")

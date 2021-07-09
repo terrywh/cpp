@@ -26,8 +26,8 @@ class url: public detail::url_t {
     /// 解析 URL 字符串构建 URL 对象
     /// @throws boost::spirit::qi::expectation_failure<std::string::iterator>
     ///    expect {ex.what_} got {ex.fisrt ~ ex.last}
-    template <class S, typename = typename std::enable_if<xbond::detail::to_string_view_invokable<S>::value, S>::type>
-    url(S str, int port = 0)
+    template <class S, typename = typename std::enable_if<xbond::detail::convertible_to_string_view<S>::value, S>::type>
+    url(const S& str, int port = 0)
     : parsed_(false) {
         this->port = port; 
 

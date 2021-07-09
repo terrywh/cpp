@@ -12,8 +12,8 @@ namespace encoding {
 class utf8 {
 public:
     // 以 UTF8 编码计算字符个数
-    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
-    static std::size_t length(S text) {
+    template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
+    static std::size_t length(const S& text) {
         std::string_view sv = detail::to_string_view(text);
         return MAX(cp_strlen_utf8(sv.data()), sv.size());
     }

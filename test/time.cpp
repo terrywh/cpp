@@ -1,4 +1,5 @@
 #include <xbond/time/date.hpp>
+#include <xbond/time/delta_clock.hpp>
 #include <iostream>
 using namespace xbond;
 
@@ -9,6 +10,7 @@ int time_test(int argc, char* argv[]) {
     auto date = time::year_month_day{dp};
     auto time = time::make_time(std::chrono::duration_cast<std::chrono::milliseconds>(tp-dp));
     std::cout << "\t" << date << " " << time << "\n";
+    std::cout << "\t" << time::iso(time::delta_clock::get()) << "\n";
 
 
     // std::cout << __func__ << "\n";

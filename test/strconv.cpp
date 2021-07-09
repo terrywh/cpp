@@ -12,5 +12,5 @@ int strconv_test(int argc, char* argv[]) {
     LOGGER() << "\t" << strconv::str2ul(o) << std::endl;
     LOGGER() << "\t" << strconv::str2ui(s) << std::endl;
     LOGGER() << "\t" << strconv::str2us(v) << std::endl;
-    LOGGER() << "\t" << strconv::str2uc(a) << std::endl;
+    LOGGER() << "\t" << (int)strconv::str2uc(a) << std::endl;
 }

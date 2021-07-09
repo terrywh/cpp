@@ -19,8 +19,8 @@ public:
      * @param addr 地址信息，例如 www.qq.com:443 或 127.0.0.1:8080 或 [ff::127::1]:8080 或 ff::127::1:8080
      * 注意，这里允许 IPv6 地址不使用 [] 包裹，并使用最后一个 ":" 分割地址与端口
      */
-    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
-    explicit address(S addr) {
+    template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
+    explicit address(const S& addr) {
         std::string_view sv = detail::to_string_view(addr);
         std::size_t idx = sv.find_last_of(':');
         if (idx == sv.npos) throw std::runtime_error("failed to parse: colon not found");
@@ -32,8 +32,8 @@ public:
     /**
      * 指定域名或IP地址及端口构建完整地址信息
      */
-    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
-    address(S host, std::uint16_t port)
+    template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
+    address(const S& host, std::uint16_t port)
     : port_(port) {
         std::string_view sv = detail::to_string_view(host);
         host_.assign(sv.data(), sv.size());
@@ -59,8 +59,8 @@ public:
         return ss.str();
     }
     // 重新赋值
-    template <class S, typename = typename std::enable_if<detail::to_string_view_invokable<S>::value, S>::type>
-    address& operator =(S s) {
+    template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
+    address& operator =(const S& s) {
         address addr {s};
         host_ = addr.host_;
         port_ = addr.port_;
