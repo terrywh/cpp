@@ -1,9 +1,7 @@
 #pragma once
 #include "../detail/data_view.hpp"
 #include <string>
-#include <openssl/opensslv.h>
-#include <openssl/evp.h>
-// extern "C" EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
+#include <boost/beast/core/detail/base64.hpp>
 
 namespace xbond {
 namespace encoding {
@@ -26,7 +24,7 @@ public:
      * 计算目标长度需求
      */
     inline static std::size_t encode_size(std::size_t size) {
-        return (size / 3 + 1) * 4;
+        return boost::beast::detail::base64::encoded_size(size);
     }
     /**
      * 编码到指定位置
@@ -36,24 +34,7 @@ public:
     template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
     static std::size_t encode(DataView str, char* out) {
         detail::data_view dv = str;
-        int len;
-        unsigned char *o, *b = o = reinterpret_cast<unsigned char*>(out);
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-        EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
-#else
-        EVP_ENCODE_CTX  ctx_;
-        EVP_ENCODE_CTX* ctx = &ctx_;
-#endif
-        EVP_EncodeInit(ctx);
-        EVP_EncodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(dv.data()), dv.size());
-        o += len;
-        EVP_EncodeFinal(ctx, o, &len);
-        o += len;
-
-        if (o > b && o[-1] == '\n') {
-            return o - b - 1; // without additional newline
-        }
-        return o - b;
+        return boost::beast::detail::base64::encode(out, dv.data(), dv.size());
     }
     /**
      * 编码指定数据
@@ -73,29 +54,14 @@ public:
      * 计算解码长度需求
      */
     inline static std::size_t decode_size(std::size_t size) {
-        return (size + 3)/4 * 3;
+        return boost::beast::detail::base64::decoded_size(size);
     }
     // 解码指定数据，并将结果写入目标区域
     template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
     static std::size_t decode(const DataView& str, char* out) {
         detail::data_view dv = str;
-        int len;
-        unsigned char *o, *b = o = reinterpret_cast<unsigned char*>(out);
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-        EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
-#else
-        EVP_ENCODE_CTX  ctx_;
-        EVP_ENCODE_CTX* ctx = &ctx_;
-#endif
-        EVP_DecodeInit(ctx);
-        EVP_DecodeUpdate(ctx, o, &len, reinterpret_cast<const unsigned char*>(dv.data()), dv.size());
-        o += len;
-        EVP_DecodeFinal(ctx, o, &len);
-        o += len;
-        if (o > b && o[-1] == '\n') {
-            return o - b - 1;
-        }
-        return o - b;
+        auto pair = boost::beast::detail::base64::decode(out, dv.data(), dv.size());
+        return pair.first;
     }
 };
 

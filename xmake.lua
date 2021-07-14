@@ -34,7 +34,6 @@ target("xbond")
         "vendor/gsl/include",
         "vendor/date/include",
         {public = true})
-    set_pcxxheader("include/xbond/vendor.h")
     add_files("src/**.cpp")
     add_files("vendor/date/src/tz.cpp", {defines = "USE_OS_TZDB"})
     add_headerfiles("include/(xbond/**.h)", "vendor/date/include/(date/**.h)","vendor/gsl/include/(gsl/**)")
@@ -45,5 +44,4 @@ target("xbond-test")
     add_rules("mode.debug")
     add_deps("xbond")
     add_includedirs("include")
-    set_pcxxheader("include/xbond/vendor.h")
     add_files("test/**.cpp")

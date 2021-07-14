@@ -11,6 +11,8 @@ int encoding_base64_test(int argc, char* argv[]) {
     std::string o = "中文", r;
     r = encoding::base64::encode(o);
     std::cout << "\t\t" << o  << " -> " << r << std::endl;
+    r = encoding::base64::encode("aaaaaaaaaaaaaaaaa1222222222222222222222222222222222222");
+    std::cout << "\t\t" << o  << " -> " << r << std::endl;
     o = encoding::base64::decode(r);
     std::cout << "\t\t" << r  << " -> " << o << std::endl;
     return 0;

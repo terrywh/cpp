@@ -1,5 +1,6 @@
 #pragma once
 #include <type_traits>
+#include <cstring>
 
 namespace xbond {
 namespace detail {
@@ -32,6 +33,9 @@ class data_view {
     std::size_t size_;
 
  public:
+    data_view(const char* data)
+    : data_(data), size_(std::strlen(data)) {}
+
     data_view(const void* data, std::size_t size)
     : data_(static_cast<const char*>(data)), size_(size) {}
 
@@ -43,7 +47,7 @@ class data_view {
     : data_(static_cast<const char*>(static_cast<const void*>(c.data()))), size_(c.size() * sizeof(typename Container::value_type)) {}
 
     template <class Element, std::size_t N>
-    data_view(Element (&array)[N])
+    data_view(const Element (&array)[N])
     : data_(array), size_(N * sizeof(Element)) {}
     // TODO: 支持更多形态的构建（转换机制）
     // 二进制数据指针
