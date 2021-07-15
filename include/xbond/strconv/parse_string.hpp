@@ -25,7 +25,7 @@ public:
     operator std::int64_t() const { return s_; }
     operator unsigned int() const { return u_; }
     operator int() const { return s_; }
-    operator unsigned short() { return u_; }
+    operator unsigned short() const { return u_; }
     operator short() const { return s_; }
 };
 
