@@ -17,6 +17,9 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     boost::asio::steady_timer          scan_;
     std::chrono::steady_clock::duration ttl_;
     struct cached_socket {
+        // cached_socket(boost::asio::ip::tcp::socket&& s, std::chrono::steady_clock::time_point e)
+        // : socket(std::move(s))
+        // , expire(e) {}
         boost::asio::ip::tcp::socket          socket;
         std::chrono::steady_clock::time_point expire;
     };
@@ -51,9 +54,9 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     // 注意：释放后该 stream 不可用
     template <class CompleteToken>
     void release(const address& addr, boost::beast::tcp_stream& stream, CompleteToken&& handler) {
-        boost::asio::post(strand_, [this, addr, &stream, handler = std::move(handler), self = shared_from_this()] () mutable {
+        boost::asio::post(strand_, [this, address = addr, socket = std::move(stream.socket()), handler = std::move(handler), self = shared_from_this()] () mutable {
             auto now = std::chrono::steady_clock::now();
-            cache_.insert({ addr, cached_socket{std::move(stream.socket()), now + ttl_} });
+            cache_.emplace(std::make_pair(address, cached_socket{std::move(socket), now + ttl_}));
             handler(boost::system::error_code{});
         });
     }

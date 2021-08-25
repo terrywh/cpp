@@ -33,7 +33,7 @@ public:
     }
 private:
     static std::locale& locale() {
-        static std::locale l = std::locale("zh_CN.UTF-8");
+        static std::locale l = std::locale("C.UTF-8");
         return l;
     }
     static const std::codecvt<char16_t, char, std::mbstate_t> & facet() {
