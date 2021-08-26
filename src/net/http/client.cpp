@@ -6,7 +6,7 @@ namespace http {
 
 client::option::option()
 :   timeout(std::chrono::seconds(5))
-, keepalive(std::chrono::seconds(50)) {}
+, keepalive(std::chrono::seconds(45)) {}
 
 client::client(boost::asio::io_context& io, client::option option)
 : io_(io)

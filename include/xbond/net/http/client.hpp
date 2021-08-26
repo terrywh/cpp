@@ -38,8 +38,9 @@ class client {
         
         return boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
             detail::client_execute<RequestBody, RequestField, ResponseBody, ResponseField>(
+                socket_,
                 std::make_shared<detail::client_execute_context<RequestBody, RequestField, ResponseBody, ResponseField>>(
-                    socket_, addr, option_.timeout, req, rsp
+                    io_, addr, option_.timeout, req, rsp
                 )
             ), handler, io_
         );

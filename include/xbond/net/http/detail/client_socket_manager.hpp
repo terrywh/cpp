@@ -37,11 +37,14 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
         boost::asio::post(strand_, [this, addr, &stream, handler = std::move(handler), self = shared_from_this()] () mutable {
             auto i = cache_.find(addr);
             // 找到了还在有效期内的同目标地址的链接
-            if (i != cache_.end() && std::chrono::steady_clock::now() < i->second.expire) {
-                stream.socket() = std::move(i->second.socket);
-                cache_.erase(i);
-                handler(boost::system::error_code{});
-                return;
+            if (i != cache_.end()) {
+                if (std::chrono::steady_clock::now() < i->second.expire) {
+                    stream.socket() = std::move(i->second.socket);
+                    cache_.erase(i);
+                    handler(boost::system::error_code{});
+                    return;
+                }
+                cache_.erase(i); // 无效连接移除
             }
             // 建立新连接
             boost::asio::async_compose<CompleteToken, void(boost::system::error_code)>(
