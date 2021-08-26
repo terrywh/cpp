@@ -16,6 +16,12 @@ void async_connect(boost::asio::ip::udp::socket& socket, const net::address& add
     return boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
         detail::socket_connect<boost::asio::ip::udp>(socket, address, resolver), handler, socket, resolver);
 }
+// 连接指定地址（支持域名解析）
+template <class CompletionToken>
+void async_connect(boost::beast::tcp_stream& stream, const net::address& address, boost::asio::ip::tcp::resolver& resolver, CompletionToken&& handler) {
+    return boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
+        detail::stream_connect<boost::asio::ip::tcp>(stream, address, resolver), handler, stream, resolver);
+}
 
 } // namespace net
 } // namespace xbond

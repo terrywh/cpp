@@ -12,8 +12,14 @@ int net_client_test(int argc, char* argv[]) {
         boost::asio::ip::tcp::resolver resolver(io);
         boost::asio::ip::tcp::socket   socket(io);
         net::async_connect(socket, net::address{"www.qq.com", 80}, resolver, ch[error]);
-        if (error)
-            LOGGER() << "\terror: " << error << "\n"; 
+        LOGGER() << "async_connect(socket)\terror: " << error << "\n"; 
+    });
+    coroutine::start(io, [&io] (coroutine_handler& ch) {
+        boost::system::error_code error;
+        boost::beast::tcp_stream stream(io);
+        boost::asio::ip::tcp::resolver resolver(io);
+        net::async_connect(stream, net::address{"www.qq.com", 80}, resolver, ch[error]);
+        LOGGER() << "async_connect(stream)\terror: " << error << "\n";
     });
     io.run();
 
