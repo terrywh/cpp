@@ -35,21 +35,19 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     template <class CompleteToken>
     void acquire(const address& addr, boost::beast::tcp_stream& stream, CompleteToken&& handler) {
         boost::asio::post(strand_, [this, addr, &stream, handler = std::move(handler), self = shared_from_this()] () mutable {
-            auto i = cache_.find(addr);
-            // 找到了还在有效期内的同目标地址的链接
-            if (i != cache_.end()) {
-                if (std::chrono::steady_clock::now() < i->second.expire) {
+            if (auto i = cache_.find(addr); i != cache_.end()) {
+                if (std::chrono::steady_clock::now() < i->second.expire) { // 找到了还在有效期内的同目标地址的链接
                     stream.socket() = std::move(i->second.socket);
                     cache_.erase(i);
                     handler(boost::system::error_code{});
                     return;
                 }
-                cache_.erase(i); // 无效连接移除
+                cache_.erase(i); // 无效连接移除(然后重新分配)
             }
             // 建立新连接
             boost::asio::async_compose<CompleteToken, void(boost::system::error_code)>(
-                net::detail::socket_connect<boost::asio::ip::tcp>(stream.socket(), addr, resolver_),
-                handler, stream.socket(), resolver_
+                net::detail::stream_connect<boost::asio::ip::tcp>(stream, addr, resolver_),
+                handler, stream, resolver_
             );
         });
     }
@@ -57,7 +55,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     // 注意：释放后该 stream 不可用
     template <class CompleteToken>
     void release(const address& addr, boost::beast::tcp_stream& stream, CompleteToken&& handler) {
-        boost::asio::post(strand_, [this, address = addr, socket = std::move(stream.socket()), handler = std::move(handler), self = shared_from_this()] () mutable {
+        boost::asio::post(strand_, [this, address = addr, socket = stream.release_socket(), handler = std::move(handler), self = shared_from_this()] () mutable {
             auto now = std::chrono::steady_clock::now();
             cache_.emplace(std::make_pair(address, cached_socket{std::move(socket), now + ttl_}));
             handler(boost::system::error_code{});
