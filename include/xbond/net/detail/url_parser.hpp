@@ -58,8 +58,7 @@ struct url_parser: boost::spirit::qi::grammar<Iterator, url_t()> {
         path = boost::spirit::ascii::char_('/') > +(boost::spirit::ascii::char_ - '?' - '#');
         query = boost::spirit::ascii::char_('?') > +(boost::spirit::ascii::char_ - '#');
         hash = boost::spirit::ascii::char_('#') > +boost::spirit::ascii::char_;
-        start = scheme[output<std::string>(u.scheme)]
-            >> "://"
+        start = -(scheme[output<std::string>(u.scheme)] >> "://")
             >> -(user[output<std::string>(u.user)] >> -(':' >> password[output<std::string>(u.password)]) >> '@')
             >> domain[output<std::string>(u.domain)]
             >> -(':' >> port[output<int>(u.port)])

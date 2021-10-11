@@ -24,6 +24,7 @@ int net_device_test(int argc, char* argv[]) {
         LOGGER()  << "\n";
         return true;
     });
+    return 0;
 }
 
 int net_hardware_address_test(int argc, char* argv[]) {
@@ -57,6 +58,7 @@ int net_url_test(int argc, char* argv[]) {
 
     LOGGER() << "\t\turl = " << url << "\n";
     LOGGER() << "\t\turl3 = " << url3 << "\n";
+    return 0;
 }
 
 int net_test(int argc, char* argv[]) {

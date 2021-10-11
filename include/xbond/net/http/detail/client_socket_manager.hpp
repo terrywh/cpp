@@ -2,6 +2,7 @@
 #include "../../../vendor.h"
 #include "../../address.hpp"
 #include "../../detail/socket_connect.hpp"
+#include "../../../time/timer.hpp"
 
 namespace xbond {
 namespace net {
@@ -12,52 +13,56 @@ namespace detail {
 // 连接管理器，支持简单的复用机制
 class client_socket_manager : public std::enable_shared_from_this<client_socket_manager> {
     boost::asio::io_context&             io_;
-    boost::asio::io_context::strand  strand_;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     boost::asio::ip::tcp::resolver resolver_;
-    boost::asio::steady_timer          scan_;
-    std::chrono::steady_clock::duration ttl_;
+
     struct cached_socket {
-        // cached_socket(boost::asio::ip::tcp::socket&& s, std::chrono::steady_clock::time_point e)
-        // : socket(std::move(s))
-        // , expire(e) {}
-        boost::asio::ip::tcp::socket          socket;
-        std::chrono::steady_clock::time_point expire;
+        std::unique_ptr<boost::beast::tcp_stream> socket;
+        std::chrono::steady_clock::time_point     expire;
     };
     std::multimap<address, cached_socket> cache_;
-    // 扫描并清理超过生存周期的缓存连接
-    void scan_for_ttl();
+    std::chrono::steady_clock::duration     ttl_;
+    using ticker = xbond::time::basic_ticker<std::chrono::steady_clock>;
+    std::shared_ptr<ticker> ticker_;
+    // 清理过期链接
+    void sweep(const std::chrono::steady_clock::time_point& now);
 
  public:
     client_socket_manager(boost::asio::io_context& io, std::chrono::steady_clock::duration ttl);
-
     boost::asio::io_context& io_context() { return io_; }
+    boost::asio::strand<boost::asio::io_context::executor_type>& executor() { return strand_; }
+
+    void start();
+    void close();
 
     template <class CompleteToken>
-    void acquire(const address& addr, boost::beast::tcp_stream& stream, CompleteToken&& handler) {
+    void acquire(const address& addr, std::unique_ptr<boost::beast::tcp_stream>& stream, CompleteToken&& handler) {
         boost::asio::post(strand_, [this, addr, &stream, handler = std::move(handler), self = shared_from_this()] () mutable {
+            // 找到还在有效期内的同目标地址的链接
             if (auto i = cache_.find(addr); i != cache_.end()) {
-                if (std::chrono::steady_clock::now() < i->second.expire) { // 找到了还在有效期内的同目标地址的链接
-                    stream.socket() = std::move(i->second.socket);
+                if (std::chrono::steady_clock::now() < i->second.expire) { 
+                    stream.swap(i->second.socket);
                     cache_.erase(i);
                     handler(boost::system::error_code{});
                     return;
                 }
                 cache_.erase(i); // 无效连接移除(然后重新分配)
             }
-            // 建立新连接
+            // 未能复用，建立新连接
+            stream = std::make_unique<boost::beast::tcp_stream>(io_);
             boost::asio::async_compose<CompleteToken, void(boost::system::error_code)>(
-                net::detail::stream_connect<boost::asio::ip::tcp>(stream, addr, resolver_),
-                handler, stream, resolver_
+                net::detail::stream_connect<boost::asio::ip::tcp>(*stream, addr, resolver_),
+                handler, *stream, resolver_, io_
             );
         });
     }
     // 释放链接（保存已备复用）
     // 注意：释放后该 stream 不可用
     template <class CompleteToken>
-    void release(const address& addr, boost::beast::tcp_stream& stream, CompleteToken&& handler) {
-        boost::asio::post(strand_, [this, address = addr, socket = stream.release_socket(), handler = std::move(handler), self = shared_from_this()] () mutable {
+    void release(const address& addr, std::unique_ptr<boost::beast::tcp_stream>& stream, CompleteToken&& handler) {
+        boost::asio::post(strand_, [this, address = addr, stream = std::move(stream), handler = std::move(handler), self = shared_from_this()] () mutable {
             auto now = std::chrono::steady_clock::now();
-            cache_.emplace(std::make_pair(address, cached_socket{std::move(socket), now + ttl_}));
+            cache_.emplace(std::make_pair(address, cached_socket{std::move(stream), now + ttl_}));
             handler(boost::system::error_code{});
         });
     }

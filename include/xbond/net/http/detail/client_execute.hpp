@@ -14,8 +14,8 @@ struct client_execute_context {
     std::chrono::steady_clock::duration timeout;
     boost::beast::http::request<RequestBody, RequestField>&    request;
     boost::beast::http::response<ResponseBody, ResponseField>& response;
-    boost::beast::tcp_stream  stream;
     boost::beast::flat_buffer buffer;
+    std::unique_ptr<boost::beast::tcp_stream> stream;
 
     client_execute_context(boost::asio::io_context& io, net::address addr,
         std::chrono::steady_clock::duration to,
@@ -23,8 +23,7 @@ struct client_execute_context {
         boost::beast::http::response<ResponseBody, ResponseField>& rsp)
     : address(addr)
     , timeout(to)
-    , request(req), response(rsp)
-    , stream(io) {}
+    , request(req), response(rsp) {}
 
 };
 template <class RequestBody, class RequestField, class ResponseBody, class ResponseField>
@@ -49,19 +48,19 @@ class client_execute: public boost::asio::coroutine {
         BOOST_ASIO_CORO_YIELD manager_->acquire(context_->address, context_->stream, std::move(self));
         if (error) return self.complete(error);
         // 超时设置
-        context_->stream.expires_after(context_->timeout);
+        context_->stream->expires_after(context_->timeout);
         context_->buffer.clear();
         // 发送请求
         context_->request.prepare_payload();
-        BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(context_->stream, context_->request, std::move(self));
+        BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*context_->stream, context_->request, std::move(self));
         if (error) return self.complete(error);
         // 接收响应
-        BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(context_->stream, context_->buffer, context_->response, std::move(self));
+        BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(*context_->stream, context_->buffer, context_->response, std::move(self));
         if (error) return self.complete(error);
         // 执行完毕（结束超时计时）
-        context_->stream.expires_never();
+        context_->stream->expires_never();
         // 连接回收复用
-        if (context_->response.need_eof()) context_->stream.close();
+        if (context_->response.need_eof()) context_->stream->close();
         else BOOST_ASIO_CORO_YIELD manager_->release(context_->address, context_->stream, std::move(self));
         // 成功响应回调
         self.complete({});

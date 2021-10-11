@@ -13,4 +13,5 @@ int os_test(int argc, char* argv[]) {
         os::unique_file_lock lock("/tmp/unique.lock", true);
         std::cout << "\tunique_file_lock - 2: " << static_cast<bool>(lock) << std::endl;
     }
+    return 0;
 }

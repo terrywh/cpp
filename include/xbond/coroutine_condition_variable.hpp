@@ -6,11 +6,11 @@
 namespace xbond {
 // 同步原语：信号量（简化）
 class coroutine_condition_variable {
-    boost::asio::io_context::strand    strand_;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::set< std::shared_ptr<coroutine> > co_;
  public:
     coroutine_condition_variable(boost::asio::io_context& io)
-    : strand_(io) {}
+    : strand_(boost::asio::make_strand(io)) {}
     // 等待
     void wait(coroutine_handler& ch) {
         auto co = ch.co();

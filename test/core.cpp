@@ -3,6 +3,7 @@
 using namespace xbond;
 
 extern int core_coroutine_test(int argc, char* argv[]);
+extern int core_channel_test(int argc, char* argv[]);
 
 int core_test(int argc, char* argv[]) {
     std::cout << __func__ << ":\n\t";
@@ -13,4 +14,6 @@ int core_test(int argc, char* argv[]) {
     std::cout << x << std::endl;
 
     core_coroutine_test(argc, argv);
+    core_channel_test(argc, argv);
+    return 0;
 }

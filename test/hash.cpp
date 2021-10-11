@@ -16,4 +16,5 @@ int hash_test(int argc, char* argv[]) {
     std::cout << "\tcrc64(" << o << ") -> " << hash::crc64::hash(o) << std::endl;
     std::cout << "\tsha1(" << o << ") -> " << encoding::hex::encode(hash::sha1::hash(o)) << std::endl;
     std::cout << "\tsha256(" << o << ") -> " << encoding::hex::encode(hash::sha256::hash(o)) << std::endl;
+    return 0;
 }

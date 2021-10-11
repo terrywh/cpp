@@ -2,6 +2,7 @@
 #include <xbond/coroutine_lock.hpp>
 #include <xbond/coroutine_condition_variable.hpp>
 #include <xbond/coroutine_channel.hpp>
+#include <xbond/thread_pool.hpp>
 #include <iostream>
 
 using namespace xbond;
@@ -42,6 +43,8 @@ int core_coroutine_test(int argc, char* argv[]) {
         }
         channel->close();
     });
-
-    io.run();
+    thread_pool pool(4, [&io] () {
+        io.run();
+    });
+    return 0;
 }

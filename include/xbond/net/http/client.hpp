@@ -21,8 +21,7 @@ class client {
  private:
     boost::asio::io_context& io_;
     option option_;
-    std::shared_ptr<detail::client_socket_manager> socket_;
-    
+    std::shared_ptr<detail::client_socket_manager> manager_;
  public:
     // 构建客户端
     client(boost::asio::io_context& io, option opt = option());
@@ -38,7 +37,7 @@ class client {
         
         return boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
             detail::client_execute<RequestBody, RequestField, ResponseBody, ResponseField>(
-                socket_,
+                manager_,
                 std::make_shared<detail::client_execute_context<RequestBody, RequestField, ResponseBody, ResponseField>>(
                     io_, addr, option_.timeout, req, rsp
                 )

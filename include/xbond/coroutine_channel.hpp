@@ -13,7 +13,7 @@ class basic_coroutine_channel: public std::enable_shared_from_this<basic_corouti
         && std::is_destructible<T>::value,
         "T must be copy constructible, copy assignable and destructible");
 
-    boost::asio::io_context::strand strand_; // 用于序列化对 into_ / from_ 容器的操作
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_; // 用于序列化对 into_ / from_ 容器的操作
     boost::lockfree::queue<T, boost::lockfree::capacity<Capacity>> queue_;
     std::set< std::shared_ptr<coroutine> > into_;
     std::set< std::shared_ptr<coroutine> > from_;
@@ -23,7 +23,7 @@ class basic_coroutine_channel: public std::enable_shared_from_this<basic_corouti
     };
 public:
     basic_coroutine_channel(boost::asio::io_context& io)
-    : strand_(io) {}
+    : strand_(boost::asio::make_strand(io)) {}
 
     // 向 CHANNEL 写入
     basic_coroutine_channel& into(const T& obj, coroutine_handler& ch) {

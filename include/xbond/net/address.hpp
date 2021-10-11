@@ -64,6 +64,7 @@ public:
         address addr {s};
         host_ = addr.host_;
         port_ = addr.port_;
+        return *this;
     }
     operator boost::asio::ip::tcp::endpoint() const {
         return boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(host_), port_ };

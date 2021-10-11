@@ -6,12 +6,12 @@ namespace xbond {
 // 同步原语：协程信号量
 class coroutine_unique_mutex {
  protected:
-    boost::asio::io_context::strand    strand_; // 序列化对 co_ 容器的操作
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_; // 序列化对 co_ 容器的操作
     int                                unique_;
     std::set< std::shared_ptr<coroutine> > co_;
  public:
     coroutine_unique_mutex(boost::asio::io_context& io)
-    : strand_(io)
+    : strand_(boost::asio::make_strand(io))
     , unique_(0) {}
     
     void lock(coroutine_handler& ch) {
@@ -35,14 +35,14 @@ class coroutine_unique_mutex {
 };
 // 协程信号量
 class coroutine_shared_mutex {
-    boost::asio::io_context::strand    strand_;
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     int                                unique_;
     int                                shared_;
     std::set< std::shared_ptr<coroutine> > co_;
     std::set< std::shared_ptr<coroutine> > so_;
  public:
     coroutine_shared_mutex(boost::asio::io_context& io)
-    : strand_(io)
+    : strand_(boost::asio::make_strand(io))
     , unique_(0)
     , shared_(0) { }
 

@@ -16,4 +16,5 @@ int strconv_test(int argc, char* argv[]) {
     LOGGER() << "\t" << static_cast<std::uint64_t>(strconv::parse_string(a)) << std::endl;
     LOGGER() << "\t" << static_cast<std::uint64_t>(strconv::parse_string("38348847570747393")) << std::endl;
     LOGGER() << "\t" << static_cast<std::uint16_t>(strconv::parse_string("90999")) << std::endl;
+    return 0;
 }
