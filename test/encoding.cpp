@@ -66,9 +66,10 @@ int encoding_percent_test(int argc, char* argv[]) {
 
 int encoding_utf8_test(int argc, char* argv[]) {
     std::cout << __func__ << "\n";
-    std::string r = "中文", o;
+    std::string r = "中文人", o;
     std::cout << "\t\t" << r << " length: " << encoding::utf8::length(r) << std::endl;
     std::cout << "\t\t" << r << " firstc: " << encoding::utf8::substr(r, 0, 1) << std::endl;
+    std::cout << "\t\t" << r << " second: " << encoding::utf8::substr(r, 1, 1) << std::endl;
     return 0;
 }
 

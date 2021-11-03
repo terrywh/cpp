@@ -13,13 +13,14 @@ int time_test(int argc, char* argv[]) {
     std::cout << "\t" << date << " " << time << "\n";
     std::cout << "\t" << time::iso(time::delta_clock::get()) << "\n";
     boost::asio::io_context io;
-    time::after(io, std::chrono::seconds(5), [] () {
-        std::cout << "\t" << "after\n";
+    auto ticker = time::tick(io, std::chrono::seconds(1), [] () {
+        std::cout << "." << std::flush;
+    });
+    time::after(io, std::chrono::milliseconds(3500), [ticker] () {
+        std::cout << "\tstop ticking\n";
+        ticker->close();
     });
     io.run();
-    // std::cout << __func__ << "\n";
-    // time::delta_clock x;
-    // std::cout << "\t" << static_cast<std::int64_t>(x) << "\n";
-    // std::cout << "\t" << x.local() << "\n";
+    std::cout << "\t" << "done\n";
     return 0;
 }
