@@ -38,9 +38,12 @@ public:
     }
     // 模拟的回调
     void operator()(const boost::system::error_code& error, std::size_t count = 0) {
-        if (error_.has_value()) *std::get<boost::system::error_code*>(error_.value()) = error;
         if (count_) *count_ = count;
-        resume();
+        resume(error);
+    }
+    void operator()(const std::error_code& error, std::size_t count = 0) {
+        if (count_) *count_ = count;
+        resume(error);
     }
     // 
     const boost::asio::strand<boost::asio::any_io_executor>& executor() const {
