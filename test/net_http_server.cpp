@@ -16,13 +16,15 @@ public:
         rsp.body() = req.body();
     }
 };
-using http_server   = net::http::server<boost::beast::http::string_body, request_handler>;
+using http_server   = net::http::server<boost::beast::http::string_body>;
 
 int net_http_server_test(int argc, char* argv[]) {
     LOGGER() << __func__ << "\n";
     boost::asio::io_context io;
-    auto svr = net::http::make_server<boost::beast::http::string_body, request_handler>(io, net::address{"127.0.0.1:8888"});
-    coroutine::start(io, std::bind(&http_server::run, svr, std::placeholders::_1));
+    auto svr = net::http::make_server<boost::beast::http::string_body>(io, net::address{"127.0.0.1:8888"});
+    coroutine::start(io, [svr] (coroutine_handler ch) {
+        svr->run<request_handler>(ch);
+    });
     thread_pool pool(4, [&io] () {
         io.run();
     });

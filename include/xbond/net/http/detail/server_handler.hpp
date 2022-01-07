@@ -1,5 +1,8 @@
 #pragma once
-#include "../../../vendor.h"
+#include <functional>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/empty_body.hpp>
 
 namespace xbond {
 namespace net {

@@ -1,6 +1,8 @@
 #pragma once
-#include "../vendor.h"
 #include "../detail/to_string_view.hpp"
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <sstream>
 
 namespace xbond {
 namespace net {

@@ -1,4 +1,6 @@
 #include <xbond/encoding/json.hpp>
+#include <boost/json/stream_parser.hpp>
+#include <boost/json/serializer.hpp>
 
 namespace xbond {
 namespace encoding {

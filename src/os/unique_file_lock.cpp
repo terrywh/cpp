@@ -1,4 +1,5 @@
 #include <xbond/os/unique_file_lock.hpp>
+#include <boost/filesystem/path.hpp>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <unistd.h>

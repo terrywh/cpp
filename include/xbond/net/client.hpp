@@ -1,6 +1,8 @@
 #pragma once
 #include "address.hpp"
 #include "detail/socket_connect.hpp"
+#include <boost/asio/compose.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 
 namespace xbond {
 namespace net {

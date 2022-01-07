@@ -1,12 +1,12 @@
 #include <xbond/time/date.hpp>
-#include <xbond/container_sink.hpp>
+#include <xbond/io/container_sink.hpp>
 using namespace xbond;
 
 namespace xbond {
 namespace time {
 
 std::string iso(std::chrono::system_clock::time_point time_point, std::chrono::hours zone_offset) {
-    using sink = container_sink<std::string>;
+    using sink = io::container_sink<std::string>;
 
     time_point += zone_offset;
     auto date_point = time::floor<time::days>(time_point);

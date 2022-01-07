@@ -1,6 +1,7 @@
 #include <xbond/net/server.hpp>
 #include <xbond/net/address.hpp>
 #include <xbond/net/async_write.hpp>
+#include <iostream>
 using namespace xbond;
 
 #define LOGGER() std::cout << "\t"

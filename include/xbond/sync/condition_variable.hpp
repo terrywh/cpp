@@ -1,25 +1,26 @@
 #pragma once
-#include "vendor.h"
-#include "coroutine.hpp"
-#include "coroutine_mutex.hpp"
+#include "../coroutine.hpp"
+#include "mutex.hpp"
+#include <vector>
 
 namespace xbond {
-// 同步原语：信号量（简化）
-class coroutine_condition_variable {
+namespace sync {
+// 同步原语：协程信号量（简化）
+class condition_variable {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    std::set< std::shared_ptr<coroutine> > co_;
+    std::vector< std::shared_ptr<coroutine> > co_;
  public:
-    coroutine_condition_variable(boost::asio::io_context& io)
+    condition_variable(boost::asio::io_context& io)
     : strand_(boost::asio::make_strand(io)) {}
     // 等待
     void wait(coroutine_handler& ch) {
         auto co = ch.co();
         boost::asio::post(strand_, [this, co] () {
-            co_.insert(co);
+            co_.push_back(co);
         });
         ch.yield(); // (1) <- resume
         boost::asio::post(strand_, [this, co] () {
-            co_.extract(co);
+            (void)std::remove(co_.begin(), co_.end(), co);
             co->resume(); // (2) <- resume
         });
         ch.yield(); // (2) <- resume
@@ -42,4 +43,5 @@ class coroutine_condition_variable {
     }
 };
 
-}
+} // namespace sync
+} // namespace xbond

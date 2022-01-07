@@ -1,4 +1,9 @@
 ### 编译安装 (Compile & Install)
+0. 安装依赖：
+```
+boost >= v1.75
+openssl >= 1.0
+```
 1. 安装 xmake 构建工具 (Install `xmake` build utility)
 ``` bash
 bash <(curl -fsSL https://xmake.io/shget.text) # curl

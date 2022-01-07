@@ -1,23 +1,24 @@
 #pragma once
-#include "vendor.h"
-#include "coroutine_mutex.hpp"
+#include "../coroutine.hpp"
+#include "mutex.hpp"
 
 namespace xbond {
+namespace sync {
 // 同步原语：协程排他锁
 template <class Mutex>
-class basic_coroutine_unique_lock {
+class basic_unique_lock {
     using mutex_type = typename std::decay<Mutex>::type;
-    mutex_type* mutex_;
+    mutex_type*     mutex_;
     coroutine_handler* ch_;
  public:
     // 持有信号量，并加锁
-    basic_coroutine_unique_lock(mutex_type& mutex, coroutine_handler& ch)
+    basic_unique_lock(mutex_type& mutex, coroutine_handler& ch)
     : mutex_(&mutex)
     , ch_(&ch) {
         mutex_->lock(*ch_);
     }
     // 持有信号量
-    basic_coroutine_unique_lock(mutex_type& mutex)
+    basic_unique_lock(mutex_type& mutex)
     : mutex_(&mutex)
     , ch_(nullptr) {}
     // 显式加锁
@@ -41,26 +42,26 @@ class basic_coroutine_unique_lock {
         return m;
     }
     // 销毁，释放可能的锁
-    ~basic_coroutine_unique_lock() {
+    ~basic_unique_lock() {
         if (mutex_ && ch_) mutex_->unlock(*ch_);
     }
 };
-using coroutine_unique_lock = basic_coroutine_unique_lock<coroutine_unique_mutex>;
+using unique_lock = basic_unique_lock<unique_mutex>;
 // 同步原语：协程共享锁 
 template <class Mutex>
-class basic_coroutine_shared_lock {
+class basic_shared_lock {
     using mutex_type = typename std::decay<Mutex>::type;
     mutex_type* mutex_;
     coroutine_handler* ch_;
  public:
     // 持有指定信号量，并对其加锁
-    basic_coroutine_shared_lock(mutex_type& mutex, coroutine_handler& ch)
+    basic_shared_lock(mutex_type& mutex, coroutine_handler& ch)
     : mutex_(&mutex)
     , ch_(&ch) {
         mutex_->shared_lock(ch_);
     }
 
-    basic_coroutine_shared_lock(mutex_type& mutex)
+    basic_shared_lock(mutex_type& mutex)
     : mutex_(&mutex)
     , ch_(nullptr) {}
     // 显式加锁
@@ -84,10 +85,11 @@ class basic_coroutine_shared_lock {
         return m;
     }
     // 销毁，释放可能的锁
-    ~basic_coroutine_shared_lock() {
+    ~basic_shared_lock() {
         if (mutex_ && ch_) mutex_->shared_unlock(*ch_);
     }
 };
-using coroutine_shared_lock = basic_coroutine_shared_lock<coroutine_shared_mutex>;
+using shared_lock = basic_shared_lock<shared_mutex>;
 
-}
+} // namespace sync
+} // namespace xbond

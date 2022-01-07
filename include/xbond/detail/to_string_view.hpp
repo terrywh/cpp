@@ -1,5 +1,6 @@
 #pragma once
-#include "../vendor.h"
+#include <string_view>
+#include <stdexcept>
 
 namespace xbond {
 namespace detail {

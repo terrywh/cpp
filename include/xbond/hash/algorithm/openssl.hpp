@@ -1,8 +1,9 @@
 #pragma once
-#include "../../vendor.h"
 #include "../../detail/data_view.hpp"
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <array>
+#include <cstdint>
 
 namespace xbond {
 namespace hash {

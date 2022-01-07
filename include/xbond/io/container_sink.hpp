@@ -3,7 +3,7 @@
 #include <boost/iostreams/stream.hpp>
 
 namespace xbond {
-
+namespace io {
 // 按流方式向容器写入
 // 
 template <typename C>
@@ -22,4 +22,5 @@ private:
     C& c_;
 };
 
+} // namespace io
 } // namespace xbond

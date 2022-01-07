@@ -1,7 +1,12 @@
 #pragma once
-#include "../../vendor.h"
 #include "../../coroutine.hpp"
 #include "detail/server_handler.hpp"
+#include <boost/beast/core/flat_static_buffer.hpp>
+#include <boost/beast/http/parser.hpp>
+#include <boost/beast/http/read.hpp>
+#include <boost/beast/http/write.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/empty_body.hpp>
 #include <boost/mp11/list.hpp>
 
 namespace xbond {
@@ -23,19 +28,19 @@ struct is_handler {
     constexpr static bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
 };
 
-template <class Body, class Handler, class... ExtraHandler>
+template <class Body, std::size_t BufferSize = 16 * 1024>
 class server {
-    static_assert(is_handler<Handler>::value);
-    typedef boost::mp11::mp_list<Handler, ExtraHandler...>    handler_type_list;
-    typedef typename std::decay<Body>::type     payload_type;
-    typedef boost::beast::http::request<Body>   request;
-    typedef boost::beast::http::response<Body> response;
+    
+    typedef typename std::decay<Body>::type       payload_type;
+    typedef boost::beast::http::request<Body>     request;
+    typedef boost::beast::http::response<Body>    response;
     boost::asio::io_context&         context_;
     boost::asio::ip::tcp::acceptor  acceptor_;
     
+    template <class... Handler>
     class session {
         boost::beast::tcp_stream               stream_;
-        boost::beast::flat_static_buffer<4096> buffer_;
+        boost::beast::flat_static_buffer<BufferSize> buffer_;
     public:
         template <class IOExecutor>
         session(IOExecutor ex)
@@ -44,16 +49,18 @@ class server {
             return stream_.socket();
         }
         void run(coroutine_handler& ch) {
+            typedef boost::mp11::mp_list<Handler...> handler_list;
             boost::beast::http::parser<true, payload_type> parser;
-            boost::mp11::mp_at_c<handler_type_list, 0> handler(stream_);
-
             boost::beast::http::async_read_header(stream_, buffer_, parser, ch);
             boost::beast::http::async_read(stream_, buffer_, parser, ch);
             // hooks
             // on_header();
             request req = parser.get();
             response rsp;
-            handler(req, rsp, ch);
+            if constexpr(boost::mp11::mp_size<handler_list>::value > 0) {
+                boost::mp11::mp_at_c<handler_list, 0> handler(stream_);
+                handler(req, rsp, ch);
+            }
             rsp.prepare_payload();
             boost::beast::http::async_write(stream_, rsp, ch);
             // on_finish();
@@ -68,10 +75,11 @@ public:
 #endif
         acceptor_.set_option(opt_reuse_port);
     }
+    template <class... Handler>
     void run(coroutine_handler& ch) {
         acceptor_.listen();
         while (true) { // TODO 结合 coroutine 提供 STOP 机制
-            auto s = std::make_shared<session>(boost::asio::make_strand(context_));
+            auto s = std::make_shared<session<Handler...>>(boost::asio::make_strand(context_));
             acceptor_.async_accept(s->socket(), ch);
             coroutine::start(s->socket().get_executor(), [s] (coroutine_handler ch) {
                 s->run(ch);
@@ -80,9 +88,9 @@ public:
     }
 };
 
-template <class Body, class... Handler>
-std::shared_ptr<server<Body, Handler...>> make_server(boost::asio::io_context& io, boost::asio::ip::tcp::endpoint bind) {
-    return std::make_shared<server<Body, Handler...>>(io, bind);
+template <class Body, std::size_t BufferSize = 16 * 1024, class... Handler>
+std::shared_ptr<server<Body, BufferSize>> make_server(boost::asio::io_context& io, boost::asio::ip::tcp::endpoint bind) {
+    return std::make_shared<server<Body, BufferSize>>(io, bind);
 }
 
 class server_handler_router {

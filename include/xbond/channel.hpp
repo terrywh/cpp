@@ -1,7 +1,7 @@
 #pragma once
-#include "vendor.h"
 #include "coroutine.hpp"
 #include <boost/lockfree/queue.hpp>
+#include <vector>
 
 namespace xbond {
 // 仿 Go 的 Channel 实现
@@ -13,10 +13,10 @@ class basic_coroutine_channel: public std::enable_shared_from_this<basic_corouti
         && std::is_destructible<T>::value,
         "T must be copy constructible, copy assignable and destructible");
 
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_; // 用于序列化对 into_ / from_ 容器的操作
+    boost::asio::strand<boost::asio::io_context::executor_type>   strand_; // 用于序列化对 into_ / from_ 容器的操作
     boost::lockfree::queue<T, boost::lockfree::capacity<Capacity>> queue_;
-    std::set< std::shared_ptr<coroutine> > into_;
-    std::set< std::shared_ptr<coroutine> > from_;
+    std::vector< std::shared_ptr<coroutine> > into_;
+    std::vector< std::shared_ptr<coroutine> > from_;
     int status_;
     enum {
         CLOSED = 0x01,
@@ -25,42 +25,48 @@ public:
     basic_coroutine_channel(boost::asio::io_context& io)
     : strand_(boost::asio::make_strand(io)) {}
 
-    // 向 CHANNEL 写入
+    // 向 CHANNEL 写入（可能“阻塞”指定协程）
     basic_coroutine_channel& into(const T& obj, coroutine_handler& ch) {
         while (!queue_.bounded_push(obj)) {
             boost::asio::post(strand_, [this, &ch] () {
-                into_.emplace(ch.co());
+                into_.push_back(ch.co());
             });
             ch.yield(); // (1) <- yield
         }
         boost::asio::post(strand_, [this, self = this->shared_from_this()] () {
-            while (!from_.empty())
-                from_.extract(from_.begin()).value()->resume(); // resume -> (2)
+            while (!from_.empty()) {
+                auto co = from_.front();
+                from_.erase(from_.begin());
+                co->resume(); // resume -> (2)
+            }
         });
         return *this;
     }
-    // 向 CHANNEL 写入（可能阻塞“当前”协程）
+    // 向 CHANNEL 写入（可能“阻塞”当前协程）
     basic_coroutine_channel& operator << (const T& obj) {
         coroutine_handler ch{coroutine::current()};
         return into(obj, ch);
     }
-    // 从 CHANNEL 读取
+    // 从 CHANNEL 读取（可能“阻塞”指定协程）
     bool from(T& obj, coroutine_handler& ch) {
         while (!queue_.pop(obj)) {
             if (status_ & CLOSED) return false;
 
             boost::asio::post(strand_, [this, &ch] () {
-                from_.emplace(ch.co());
+                from_.push_back(ch.co());
             });
             ch.yield(); // (2) <- yield
         }
         boost::asio::post(strand_, [this, self = this->shared_from_this()] () {
-            while (!into_.empty())
-                into_.extract(into_.begin()).value()->resume(); // resume -> (1)
+            while (!into_.empty()) {
+                auto co = into_.front();
+                into_.erase(into_.begin());
+                co->resume(); // resume -> (1)
+            }
         });
         return true;
     }
-    // 从 CHANNEL 读取（可能阻塞“当前”协程）
+    // 从 CHANNEL 读取（可能“阻塞”当前协程）
     bool operator >> (T& obj) {
         coroutine_handler ch{coroutine::current()};
         return from(obj, ch);
@@ -69,8 +75,11 @@ public:
     void close() {
         status_ |= CLOSED;
         boost::asio::post(strand_, [this, self = this->shared_from_this()] () {
-            while (!from_.empty())
-                from_.extract(from_.begin()).value()->resume(); // resume -> (2)
+            while (!from_.empty()) {
+                auto co = from_.front();
+                from_.erase(from_.begin());
+                co->resume(); // resume -> (2)
+            }
         });
     }
 };

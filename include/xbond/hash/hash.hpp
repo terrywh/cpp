@@ -1,5 +1,4 @@
 #pragma once
-#include "../vendor.h"
 #include "../detail/data_view.hpp"
 #include "algorithm/algorithm.hpp"
 #include "algorithm/openssl.hpp"

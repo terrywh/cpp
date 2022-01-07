@@ -1,6 +1,8 @@
 #pragma once
-#include "vendor.h"
 #include "detail/snowflake_node.hpp"
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 
 namespace xbond {
 // 简单雪花算法（用于生成全局唯一ID）

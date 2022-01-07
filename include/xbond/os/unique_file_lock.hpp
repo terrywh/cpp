@@ -1,5 +1,5 @@
 #pragma once
-#include "../vendor.h"
+#include <string_view>
 
 namespace xbond {
 namespace os {

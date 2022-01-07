@@ -1,5 +1,4 @@
 #pragma once
-#include "../../vendor.h"
 #include <boost/crc.hpp>
 
 namespace xbond {

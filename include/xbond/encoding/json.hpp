@@ -1,9 +1,11 @@
 #pragma once
-#include "../vendor.h"
 #include "../detail/to_string_view.hpp"
 #include "dynamic_buffer_sink.hpp"
 #include "json/detail/parser_handler.hpp"
+#include <boost/json/value.hpp>
+#include <boost/json/parser.hpp>
 #include <boost/property_tree/json_parser.hpp>
+
 namespace xbond {
 namespace encoding {
 namespace json {

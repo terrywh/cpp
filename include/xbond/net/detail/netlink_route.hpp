@@ -1,10 +1,12 @@
 #pragma once
-#include "../../vendor.h"
 #include "../device_info.hpp"
 #include "netlink_route_query.hpp"
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <unistd.h>
+#include <map>
+#include <cassert>
 
 namespace xbond {
 namespace net {
@@ -43,13 +45,13 @@ class netlink_route {
         // 发送请求
         iov = { nh, nh->nlmsg_len };
         msg = { &sa_, sizeof(sa_), &iov, 1, nullptr, 0ul, 0 };
-        len = sendmsg(fd_, &msg, 0);
+        len = ::sendmsg(fd_, &msg, 0);
         assert(len >= 0);
         // 接收
         iov = { buffer_, sizeof(buffer_) };
         msg = { &sa_, sizeof(sa_), &iov, 1, nullptr, 0ul, 0 };
         while (!end) {
-            len = recvmsg(fd_, &msg, 0);
+            len = ::recvmsg(fd_, &msg, 0);
             assert(len >= 0);
             nh = reinterpret_cast<struct nlmsghdr*>(buffer_);
             // 解析此次接收到的数据
@@ -79,7 +81,7 @@ class netlink_route {
  public:
 
     netlink_route() {
-        fd_ = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+        fd_ = ::socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
         struct sockaddr_nl sa;
         std::memset(&sa, 0, sizeof(sa));
         sa.nl_family = AF_NETLINK;
@@ -93,7 +95,7 @@ class netlink_route {
         pid_ = sa.nl_pid;
     }
     ~netlink_route() {
-        int r = close(fd_);
+        int r = ::close(fd_);
         assert(r >= 0);
     }
     // 遍历设备信息（回调存在返回值）

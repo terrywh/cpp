@@ -1,7 +1,7 @@
 #include <xbond/coroutine.hpp>
-#include <xbond/coroutine_lock.hpp>
-#include <xbond/coroutine_condition_variable.hpp>
-#include <xbond/coroutine_channel.hpp>
+#include <xbond/sync/lock.hpp>
+#include <xbond/sync/condition_variable.hpp>
+#include <xbond/channel.hpp>
 #include <xbond/thread_pool.hpp>
 #include <iostream>
 
@@ -10,9 +10,9 @@ using namespace xbond;
 int core_coroutine_test(int argc, char* argv[]) {
     std::cout << __func__ << "\n";
     boost::asio::io_context io;
-    coroutine_condition_variable cv(io);
-    coroutine_unique_mutex mutex(io);
-    coroutine_unique_lock guard(mutex);
+    sync::condition_variable cv(io);
+    sync::unique_mutex mutex(io);
+    sync::unique_lock guard(mutex);
     auto channel = make_channel<int>(io);
     int shared = 0;
 
@@ -20,7 +20,7 @@ int core_coroutine_test(int argc, char* argv[]) {
         cv.wait(ch);
         std::cout << "\t\twake up\n";
         {
-        coroutine_unique_lock guard(mutex, ch);
+        sync::unique_lock guard(mutex, ch);
         std::cout << "\t\tlock: " << shared++ << "\n";
         }
         int x;

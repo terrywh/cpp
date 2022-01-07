@@ -1,6 +1,6 @@
 #pragma once
-#include "../vendor.h"
 #include "../coroutine.hpp"
+#include <boost/asio/ip/tcp.hpp>
 
 namespace xbond {
 namespace net {

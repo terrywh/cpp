@@ -1,9 +1,9 @@
 #pragma once
-#include "../../vendor.h"
 #include "../device_info.hpp"
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <cstring>
 
 namespace xbond {
 namespace net {

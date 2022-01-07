@@ -1,4 +1,3 @@
 #pragma once
-#warning user should use "hash.hpp" directly instead, "sha1.hpp" will be deleted.
-#include "../vendor.h"
+#warning (Deprecated) use "hash.hpp" instead, "sha1.hpp" will be deleted.
 #include "hash.hpp"

@@ -1,5 +1,4 @@
 #pragma once
-#include "../vendor.h"
 #include "device.hpp"
 #include "detail/address_storage.hpp"
 #include <boost/asio/ip/address.hpp>

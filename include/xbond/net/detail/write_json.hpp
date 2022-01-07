@@ -1,5 +1,7 @@
 #pragma once
-#include "../../vendor.h"
+#include <boost/json.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/write.hpp>
 
 namespace xbond {
 namespace net {

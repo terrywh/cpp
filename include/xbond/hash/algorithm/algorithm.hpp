@@ -1,5 +1,5 @@
 #pragma once
-#include "../../vendor.h"
+#include <type_traits>
 
 namespace xbond {
 namespace hash {

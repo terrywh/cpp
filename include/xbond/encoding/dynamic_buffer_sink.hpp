@@ -1,5 +1,5 @@
 #pragma once
-#include "../vendor.h"
+#include <boost/asio/buffer.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/concepts.hpp>
 
