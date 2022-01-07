@@ -5,8 +5,6 @@ using namespace xbond;
 
 #define LOGGER() std::cout << "\t"
 
-class session;
-
 class session {
     boost::asio::ip::tcp::socket socket_;
  public:

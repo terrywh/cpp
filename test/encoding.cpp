@@ -3,12 +3,41 @@
 #include <xbond/encoding/json.hpp>
 #include <xbond/encoding/percent.hpp>
 #include <xbond/encoding/utf8.hpp>
+#include <libbase64.h>
 #include <iostream>
 using namespace xbond;
 
+static std::string load_from_file(const char* file) {
+    std::ifstream fs("libxbond.a");
+    fs.seekg(0, std::ifstream::end);
+    std::size_t size = fs.tellg();
+    std::string data;
+    data.resize(size);
+    fs.read(data.data(), size);
+    return data;
+}
+
+static std::string large_data = load_from_file("libxbond.a");
+
 int encoding_base64_test(int argc, char* argv[]) {
     std::cout << __func__ << "\n";
-    std::string o = "中文", r;
+    std::string o, r;
+   
+    auto begin = std::chrono::high_resolution_clock::now();
+    for (int i=0;i<100;++i) {
+        r = encoding::base64::encode(large_data);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "\t\tencode -> " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms\n";
+    
+    std::size_t outl;
+    begin = std::chrono::high_resolution_clock::now();
+    for (int i=0;i<100;++i) {
+        o = encoding::base64::decode(r);
+    }
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "\t\tdecode -> " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms\n";
+    o = "1中2国3";
     r = encoding::base64::encode(o);
     std::cout << "\t\t" << o  << " -> " << r << std::endl;
     r = encoding::base64::encode("aaaaaaaaaaaaaaaaa1222222222222222222222222222222222222");
