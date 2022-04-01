@@ -17,12 +17,12 @@ int time_test(int argc, char* argv[]) {
     std::cout << "\t" << time::iso(time::delta_clock::get()) << "\n";
     boost::asio::io_context io;
     
-    auto timer = time::tick(io, std::chrono::seconds(3), [] () {
+    time::tick(io, std::chrono::seconds(3), [] (boost::system::error_code error) {
         std::cout << "\t tick\n";
     });
-    time::after(io, std::chrono::seconds(10), [timer] () {
+    time::after(io, std::chrono::seconds(10), [&io] (boost::system::error_code error) {
         std::cout << "\t" << "stop ticker:\n";
-        timer->close();
+        io.stop();
     });
     io.run();
     return 0;

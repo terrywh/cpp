@@ -1,5 +1,6 @@
 #include <xbond/net/http/client.hpp>
 #include <xbond/thread_pool.hpp>
+#include <xbond/time/sleep_for.hpp>
 #include <iostream>
 using namespace xbond;
 
@@ -22,7 +23,7 @@ int net_http_client_test(int argc, char* argv[]) {
                 cli.execute(net::address{"www.qq.com",80}, req, rsp, ch[error]);
                 LOGGER() << "\terror: " << error << " status: " << rsp.result() << " body size: " << rsp.body().size() << "\n";
                 rsp.body().clear();
-                time::sleep_for(std::chrono::milliseconds(std::rand()%5));
+                time::sleep_for(std::chrono::milliseconds(std::rand()%5), ch);
             }
         });
     }

@@ -22,8 +22,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     };
     std::multimap<address, cached_socket> cache_;
     std::chrono::steady_clock::duration     ttl_;
-    using ticker = xbond::time::basic_ticker<std::chrono::steady_clock>;
-    std::shared_ptr<ticker> ticker_;
+    std::shared_ptr<boost::asio::steady_timer> ticker_;
     // 清理过期链接
     void sweep(const std::chrono::steady_clock::time_point& now);
 

@@ -8,18 +8,21 @@ namespace detail {
 
 client_socket_manager::client_socket_manager(boost::asio::io_context& io, std::chrono::steady_clock::duration ttl)
 : io_(io), strand_(boost::asio::make_strand(io)), resolver_(io), ttl_(ttl) {
-    
+    ticker_ = std::make_shared<boost::asio::steady_timer>(strand_);
 }
 
 void client_socket_manager::start() {
-    ticker_ = xbond::time::tick(strand_, ttl_ / 5, [this, self = shared_from_this()] () {
+    ticker_->expires_after(ttl_ / 5);
+    ticker_->async_wait([this, self = shared_from_this()] (const boost::system::error_code& error) {
+        if (error) return;
         sweep(std::chrono::steady_clock::now());
+        start();
     });
 }
 
 void client_socket_manager::close() {
     assert(ticker_);
-    ticker_->close();
+    ticker_->cancel();
 }
 
 void client_socket_manager::sweep(const std::chrono::steady_clock::time_point& now) {
