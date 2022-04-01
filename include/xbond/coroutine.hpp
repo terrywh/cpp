@@ -18,12 +18,10 @@ class basic_coroutine_handler {
 public:
     using coroutine_type = typename std::decay<C>::type;
     // 创建空的处理器
-    basic_coroutine_handler()
-    : count_(nullptr) {}
+    basic_coroutine_handler() = default;
     // 创建指定协程的处理器
     explicit basic_coroutine_handler(std::shared_ptr<coroutine_type> co)
-    : count_(nullptr)
-    , co_(co) {}
+    : co_(co) {}
     // 
     basic_coroutine_handler(const basic_coroutine_handler& ch) = default;
     // 指定错误引用（用于从异步流程带回错误）
@@ -39,7 +37,7 @@ public:
     // 模拟的回调
     void operator()(const boost::system::error_code& error, std::size_t count = 0) {
         if (error_.has_value()) *std::get<boost::system::error_code*>(error_.value()) = error;
-        if (count_) *count_ = count;
+        if (count_.has_value()) *count_.value() = count;
         resume();
     }
     // 
@@ -48,13 +46,13 @@ public:
     }
     // 重置处理器
     void reset() {
-        count_ = nullptr;
+        count_.reset();
         error_.reset();
         co_.reset();
     }
     // 重置处理器用于控制指定的协程
     void reset(std::shared_ptr<coroutine_type> co) {
-        count_ = nullptr;
+        count_.reset();
         error_.reset();
         co_ = co;
     }
@@ -103,7 +101,7 @@ public:
     }
 
 protected:
-    std::size_t* count_; // 用于捕获长度数据
+    std::optional<std::size_t*> count_; // 用于捕获长度数据
     std::optional< std::variant<std::error_code*, boost::system::error_code*> > error_; // 用于捕获错误值
     // 被管控的协程
     std::shared_ptr<coroutine_type> co_;
@@ -111,6 +109,12 @@ protected:
     friend coroutine_type;
     friend class boost::asio::async_result<
         basic_coroutine_handler<C>, void(boost::system::error_code error, std::size_t size)>;
+    friend class boost::asio::async_result<
+        basic_coroutine_handler<C>, void(boost::system::error_code error, std::size_t size)>;
+    friend class boost::asio::async_result<
+        basic_coroutine_handler<C>, void(std::error_code error, std::size_t size)>;
+    friend class boost::asio::async_result<
+        basic_coroutine_handler<C>, void(std::error_code error)>;
 };
 // 协程
 template <class Hook>
@@ -176,18 +180,6 @@ public:
         >::type* v = nullptr) {
         initiate(ctx.get_executor(), fn);
     }
-    // 使协程休眠一段时间
-    static void sleep(std::chrono::steady_clock::duration duration, basic_coroutine_handler<basic_coroutine<Hook>>& ch) {
-        boost::asio::steady_timer timer(ch.executor());
-        timer.expires_after(duration);
-        timer.async_wait(ch);
-    }
-    // 使“当前”协程休眠一段时间
-    static void sleep(std::chrono::steady_clock::duration duration) {
-        basic_coroutine_handler<basic_coroutine<Hook>> ch{current()};
-        sleep(duration, ch);
-    }
-
 private:
     // 启动协程
     template <class Executor, class Handler>
@@ -254,6 +246,38 @@ private:
 
 template <>
 class async_result<::xbond::coroutine_handler, void(boost::system::error_code error)> {
+public:
+    explicit async_result(::xbond::coroutine_handler& ch) : ch_(ch) {
+    }
+    using completion_handler_type = ::xbond::coroutine_handler;
+    using return_type = void;
+    void get() {
+        ch_.yield();
+    }
+private:
+    ::xbond::coroutine_handler &ch_;
+};
+
+template <>
+class async_result<::xbond::coroutine_handler, 
+    void(std::error_code error, std::size_t size)> {
+public:
+    explicit async_result(::xbond::coroutine_handler& ch) : ch_(ch), size_(0) {
+        ch_.count_ = &size_;
+    }
+    using completion_handler_type = ::xbond::coroutine_handler;
+    using return_type = std::size_t;
+    return_type get() {
+        ch_.yield();
+        return size_;
+    }
+private:
+    ::xbond::coroutine_handler &ch_;
+    std::size_t size_;
+};
+
+template <>
+class async_result<::xbond::coroutine_handler, void(std::error_code error)> {
 public:
     explicit async_result(::xbond::coroutine_handler& ch) : ch_(ch) {
     }

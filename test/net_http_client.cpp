@@ -13,7 +13,7 @@ int net_http_client_test(int argc, char* argv[]) {
     for (int i=0;i<8;++i) {
         coroutine::start(io, [&io] (coroutine_handler& ch) {
             net::http::client cli{io};
-            for (int j=0;j<100;++j) {
+            for (int j=0;j<50;++j) {
                 boost::beast::http::request<boost::beast::http::empty_body> req {boost::beast::http::verb::get, "/", 11};
                 req.set(boost::beast::http::field::host, "www.qq.com");
                 req.keep_alive(true);
@@ -22,7 +22,7 @@ int net_http_client_test(int argc, char* argv[]) {
                 cli.execute(net::address{"www.qq.com",80}, req, rsp, ch[error]);
                 LOGGER() << "\terror: " << error << " status: " << rsp.result() << " body size: " << rsp.body().size() << "\n";
                 rsp.body().clear();
-                time::sleep(std::chrono::milliseconds(std::rand()%3));
+                time::sleep_for(std::chrono::milliseconds(std::rand()%5));
             }
         });
     }

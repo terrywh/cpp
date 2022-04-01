@@ -3,6 +3,7 @@
 #include <xbond/coroutine_condition_variable.hpp>
 #include <xbond/coroutine_channel.hpp>
 #include <xbond/thread_pool.hpp>
+#include <xbond/time/timer.hpp>
 #include <iostream>
 
 using namespace xbond;
@@ -30,12 +31,12 @@ int core_coroutine_test(int argc, char* argv[]) {
     });
 
     coroutine::start(io, [&cv, &guard, &channel, &shared] (coroutine_handler& ch) {
-        coroutine::sleep(std::chrono::milliseconds(1000), ch);
+        xbond::time::sleep_for(std::chrono::milliseconds(1000), ch);
         guard.lock(ch);
         cv.notify_all();
 
         shared = 1;
-        coroutine::sleep(std::chrono::milliseconds(1000), ch);
+        xbond::time::sleep_for(std::chrono::milliseconds(1000), ch);
         guard.unlock(ch);
 
         for (int i=0;i<10;++i) {

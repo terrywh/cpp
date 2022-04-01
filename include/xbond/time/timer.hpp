@@ -39,7 +39,7 @@ using steady_ticker = basic_ticker<std::chrono::steady_clock>;
 
 // 启动定时器，并执行回调（一次性）
 template <class Executor, class Callback>
-std::shared_ptr<basic_ticker<std::chrono::steady_clock>> after(Executor& executor, std::chrono::steady_clock::duration interval, Callback&& cb) {
+std::shared_ptr<steady_ticker> after(Executor& executor, std::chrono::steady_clock::duration interval, Callback&& cb) {
     auto context = std::make_shared<basic_ticker<std::chrono::steady_clock>>(executor, interval);
     context->start(std::forward<Callback>(cb));
     context->reset(); // 标记，不在重复执行
@@ -47,12 +47,13 @@ std::shared_ptr<basic_ticker<std::chrono::steady_clock>> after(Executor& executo
 }
 // 启动定时器并执行回调
 template <class Executor, class Callback>
-std::shared_ptr<basic_ticker<std::chrono::steady_clock>> tick(Executor& executor, std::chrono::steady_clock::duration interval, Callback&& cb) {
+std::shared_ptr<steady_ticker> tick(Executor& executor, std::chrono::steady_clock::duration interval, Callback&& cb) {
     auto context = std::make_shared<basic_ticker<std::chrono::steady_clock>>(executor, interval);
     context->start(std::forward<Callback>(cb));
     return context;
 }
 // 暂停当前协程（一段时间）
-void sleep(std::chrono::steady_clock::duration duration);
+void sleep_for(std::chrono::steady_clock::duration duration, xbond::coroutine_handler& ch);
+void sleep_for(std::chrono::steady_clock::duration duration);
 } // namespace time
 } // namespace xbond
