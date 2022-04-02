@@ -1,6 +1,13 @@
 #pragma once
-#include "vendor.h"
-#include <variant>
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/context/fiber.hpp>
+#include <boost/system/error_code.hpp>
+#include <memory>
+#include <system_error>
+#include <variant> // 同时支持 std::error_code / boost::system::error_code 错误形态
 
 namespace xbond {
 // 协程处理器

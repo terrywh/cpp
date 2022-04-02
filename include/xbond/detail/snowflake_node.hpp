@@ -1,5 +1,6 @@
 #pragma once
-#include "../vendor.h"
+#include <ostream>
+#include <cstdint>
 
 namespace xbond {
 namespace detail {

@@ -1,7 +1,7 @@
 #include <xbond/coroutine.hpp>
-#include <xbond/coroutine_lock.hpp>
-#include <xbond/coroutine_condition_variable.hpp>
-#include <xbond/coroutine_channel.hpp>
+#include <xbond/sync/lock.hpp>
+#include <xbond/sync/condition_variable.hpp>
+#include <xbond/channel.hpp>
 #include <xbond/thread_pool.hpp>
 #include <xbond/time/sleep_for.hpp>
 #include <iostream>

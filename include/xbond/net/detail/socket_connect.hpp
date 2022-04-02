@@ -1,6 +1,7 @@
 #pragma once
-#include "../../vendor.h"
 #include "../address.hpp"
+#include <boost/asio/connect.hpp>
+#include <boost/beast/core/basic_stream.hpp>
 
 namespace xbond {
 namespace net {

@@ -1,20 +1,23 @@
 #pragma once
-#include "../../../vendor.h"
 #include "client_socket_manager.hpp"
 #include "../../address.hpp"
+#include <boost/beast/core/flat_static_buffer.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/write.hpp>
+#include <boost/beast/http/read.hpp>
 
 namespace xbond {
 namespace net {
 namespace http {
 namespace detail {
 
-template <class RequestBody, class RequestField, class ResponseBody, class ResponseField>
+template <class RequestBody, class RequestField, class ResponseBody, class ResponseField, std::size_t BufferSize = 16 * 1024>
 struct client_execute_context {
     net::address address;
     std::chrono::steady_clock::duration timeout;
     boost::beast::http::request<RequestBody, RequestField>&    request;
     boost::beast::http::response<ResponseBody, ResponseField>& response;
-    boost::beast::flat_buffer buffer;
+    boost::beast::flat_static_buffer<BufferSize> buffer;
     std::unique_ptr<boost::beast::tcp_stream> stream;
 
     client_execute_context(boost::asio::io_context& io, net::address addr,

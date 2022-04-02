@@ -1,5 +1,6 @@
 #include <xbond/net/client.hpp>
 #include <xbond/coroutine.hpp>
+#include <iostream>
 using namespace xbond;
 
 #define LOGGER() std::cout << "\t"

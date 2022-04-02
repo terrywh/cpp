@@ -1,5 +1,4 @@
 #pragma once
-#include "../vendor.h"
 #include "detail/netlink_route.hpp"
 
 namespace xbond {

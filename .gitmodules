@@ -4,3 +4,6 @@
 [submodule "vendor/date"]
 	path = vendor/date
 	url = https://github.com/HowardHinnant/date.git
+[submodule "vendor/base64"]
+	path = vendor/base64
+	url = https://github.com/aklomp/base64

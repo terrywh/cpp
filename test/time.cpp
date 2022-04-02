@@ -1,6 +1,7 @@
 #include <xbond/time/date.hpp>
 #include <xbond/time/delta_clock.hpp>
 #include <xbond/time/timer.hpp>
+#include <xbond/thread_pool.hpp>
 #include <iostream>
 using namespace xbond;
 
@@ -24,6 +25,8 @@ int time_test(int argc, char* argv[]) {
         std::cout << "\t" << "stop ticker:\n";
         io.stop();
     });
-    io.run();
+    thread_pool pool { 4, [] (boost::asio::io_context& io) {
+        io.run();
+    }, io);
     return 0;
 }

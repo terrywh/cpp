@@ -1,42 +1,37 @@
 #pragma once
-#include "../vendor.h"
 #include "../coroutine.hpp"
+#include <boost/asio/ip/tcp.hpp>
 
 namespace xbond {
 namespace net {
 /**
  * 判定提供的会话类型是否满足需求
- * 大致约定如下：
- * class T {
- *  public:
- *     T(boost::asio::ip::tcp::socket&& socket);
- *     void run(coroutine_handler& ch); // 与 start() 可选
- *     void start(); // 与 run 可选
- * }
  */
 template <class T>
 struct is_tcp_session {
-    struct run {
-        template <typename U> static auto test(int) -> decltype(
-        std::declval<U>().run(std::declval<coroutine_handler&>()));
+    struct is_session_runable {
+        template <typename U> static auto test(int) -> typename std::enable_if<
+                std::is_invocable<decltype(&U::run), U&, coroutine_handler&>::value,
+            std::true_type>::type;
         template <typename> static std::false_type test(...);
         constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
     };
-    struct start {
-        template <typename U> static auto test(int) -> decltype(std::declval<U>().start());
+    struct is_session_startible {
+        template <typename U> static auto test(int) -> typename std::enable_if<
+                std::is_invocable<decltype(&U::start), U&>::value,
+            std::true_type>::type;
         template <typename> static std::false_type test(...);
         constexpr static bool value = !std::is_same<decltype(test<T>(0)), std::false_type>::value;
     };
 
     template <typename U> static auto test(int) -> typename std::enable_if<
             std::is_constructible<U, boost::asio::ip::tcp::socket&&>::value && // 构造
-            (run::value || start::value),
+           (is_session_runable::value || is_session_startible::value), // u.run(ch) || u.start()
         std::true_type>::type;
     template <typename> static std::false_type test(...);
 
     constexpr static bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
 };
-
 
 template <class Session>
 class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
@@ -47,12 +42,12 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
         acceptor_.async_accept(socket_, 
         [this, self = this->shared_from_this()] (const boost::system::error_code& error) {
             if (error) return;
-            if constexpr (is_tcp_session<Session>::run::value)
+            if constexpr (is_tcp_session<Session>::is_session_runable::value)
                 coroutine::start(socket_.get_executor(),
                 [session = std::make_shared<Session>(std::move(socket_))] (coroutine_handler& ch) {
                     session->run(ch);
                 });
-            else if constexpr(is_tcp_session<Session>::start::value)
+            else if constexpr(is_tcp_session<Session>::is_session_startible::value)
                 std::make_shared<Session>(std::move(socket_))->start();
             accept();
         });

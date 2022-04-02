@@ -1,12 +1,14 @@
 #pragma once
 #include "../detail/data_view.hpp"
 #include <string>
-#include <boost/beast/core/detail/base64.hpp>
 
 namespace xbond {
 namespace encoding {
 
 class base64 {
+    static std::size_t encode_(detail::data_view dv, char* out);
+    static std::size_t decode_(detail::data_view dv, char* out);
+
 public:
     // 编码并返回变后的字符串
     template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
@@ -23,9 +25,7 @@ public:
     /**
      * 计算目标长度需求
      */
-    inline static std::size_t encode_size(std::size_t size) {
-        return boost::beast::detail::base64::encoded_size(size);
-    }
+    static std::size_t encode_size(std::size_t size);
     /**
      * 编码到指定位置
      * 若用户需要 c_str 需要自行在长度末尾添加 '\0' 结束符
@@ -33,8 +33,7 @@ public:
      */
     template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
     static std::size_t encode(DataView str, char* out) {
-        detail::data_view dv = str;
-        return boost::beast::detail::base64::encode(out, dv.data(), dv.size());
+        return encode_(str, out);
     }
     /**
      * 编码指定数据
@@ -53,17 +52,13 @@ public:
     /**
      * 计算解码长度需求
      */
-    inline static std::size_t decode_size(std::size_t size) {
-        return boost::beast::detail::base64::decoded_size(size);
-    }
+    static std::size_t decode_size(std::size_t size);
     // 解码指定数据，并将结果写入目标区域
     template <class DataView, typename = typename std::enable_if<std::is_convertible<DataView, detail::data_view>::value, DataView>::type>
     static std::size_t decode(const DataView& str, char* out) {
-        detail::data_view dv = str;
-        auto pair = boost::beast::detail::base64::decode(out, dv.data(), dv.size());
-        return pair.first;
+        return decode_(str, out);
     }
 };
 
-}
-}
+} // namespace encoding
+} // namespace xbond

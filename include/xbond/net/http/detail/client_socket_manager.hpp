@@ -1,14 +1,17 @@
 #pragma once
-#include "../../../vendor.h"
 #include "../../address.hpp"
 #include "../../detail/socket_connect.hpp"
 #include "../../../time/timer.hpp"
+#include <boost/asio/compose.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 
 namespace xbond {
 namespace net {
 namespace http {
 
+template <std::size_t BufferSize>
 class client;
+
 namespace detail {
 // 连接管理器，支持简单的复用机制
 class client_socket_manager : public std::enable_shared_from_this<client_socket_manager> {
@@ -65,7 +68,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
             handler(boost::system::error_code{});
         });
     }
-
+    template <std::size_t BufferSize>
     friend class xbond::net::http::client;
 };
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <xbond/os/env.hpp>
 #include <xbond/os/unique_file_lock.hpp>
 using namespace xbond;

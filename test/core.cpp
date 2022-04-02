@@ -1,4 +1,5 @@
 #include <xbond/snowflake.hpp>
+#include <boost/json.hpp>
 #include <iostream>
 using namespace xbond;
 

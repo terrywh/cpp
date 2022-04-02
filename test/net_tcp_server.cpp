@@ -1,11 +1,10 @@
 #include <xbond/net/server.hpp>
 #include <xbond/net/address.hpp>
 #include <xbond/net/async_write.hpp>
+#include <iostream>
 using namespace xbond;
 
 #define LOGGER() std::cout << "\t"
-
-class session;
 
 class session {
     boost::asio::ip::tcp::socket socket_;
