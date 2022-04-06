@@ -11,29 +11,29 @@ using namespace xbond;
 int core_coroutine_test(int argc, char* argv[]) {
     std::cout << __func__ << "\n";
     boost::asio::io_context io;
-    coroutine_condition_variable cv(io);
-    coroutine_unique_mutex mutex(io);
-    coroutine_unique_lock guard(mutex);
+    sync::condition_variable cv(io);
+    sync::unique_mutex mutex(io);
+    sync::unique_lock guard(mutex);
     auto timer = std::make_shared<boost::asio::steady_timer>(io);
-    auto channel = make_channel<int>(io);
+    channel<int, 2> chn(io);
     int shared = 0;
 
-    coroutine::start(io, [&cv, &mutex, &channel, &shared] (coroutine_handler& ch) {
+    coroutine::start(io, [&cv, &mutex, &chn, &shared] (coroutine_handler& ch) {
         std::cout << "\t\tcoroutine1: started\n";
         cv.wait(ch);
         std::cout << "\t\tcoroutine1: wake up\n";
         {
-        coroutine_unique_lock guard(mutex, ch);
-        std::cout << "\t\tcoroutine1: lock: " << shared++ << "\n";
+            std::cout << "\t\tcoroutine1: before lock\n";
+            sync::unique_lock _(mutex, ch);
+            std::cout << "\t\tcoroutine1: share = " << shared++ << "\n";
         }
-        int x;
-        while (channel->from(x, ch)) {
-            std::cout << "\t\t" << x << "\n";
+        for (int x; chn >> x;) {
+            std::cout << "\t\tcoroutine1: x = " << x << "\n";
         }
         std::cout << "\t\tcoroutine1: ended\n";
     });
 
-    coroutine::start(io, [&io, &timer] (coroutine_handler& ch) {
+    coroutine::start(io, [&io, &timer, &chn] (coroutine_handler& ch) {
         boost::system::error_code error;
         std::cout << "\t\tcoroutine2: started\n";
         timer->expires_after(std::chrono::seconds(10));
@@ -41,26 +41,30 @@ int core_coroutine_test(int argc, char* argv[]) {
         if (error == boost::asio::error::operation_aborted) {
             std::cout << "\t\tcoroutine2: canceled\n";
         }
+        for (int x; chn >> x;) {
+            std::cout << "\t\tcoroutine2: x = " << x << "\n";
+        }
         std::cout << "\t\tcoroutine2: ended\n";
     });
 
-    coroutine::start(io, [&cv, &guard, &channel, &shared, &timer] (coroutine_handler& ch) {
+    coroutine::start(io, [&cv, &guard, &chn, &shared, &timer] (coroutine_handler& ch) {
         std::cout << "\t\tcoroutine3: started\n";
         xbond::time::sleep_for(std::chrono::milliseconds(1000), ch);
-        std::cout << "\t\tcoroutine3: (wakeup and) cancel coroutine2\n";
-        timer->cancel();
+        std::cout << "\t\tcoroutine3: cancel coroutine2\n";
+        timer.reset();
 
         guard.lock(ch);
+        std::cout << "\t\tcoroutine3: wakeup coroutine1\n";
         cv.notify_all();
 
-        shared = 1;
+        shared++;
         xbond::time::sleep_for(std::chrono::milliseconds(1000), ch);
+        std::cout << "\t\tcoroutine3: unlock\n";
         guard.unlock(ch);
 
-        for (int i=0;i<10;++i) {
-            channel->into(i, ch);
-        }
-        channel->close();
+        for (int i=0;i<10;++i) chn << i;
+        std::cout << "\t\tcoroutine3: close channel\n";
+        chn.close();
         std::cout << "\t\tcoroutine3: ended\n";
     });
 

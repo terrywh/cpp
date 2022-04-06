@@ -42,7 +42,7 @@ target("date")
 target("base64")
     set_kind("object")
     on_build(function(target)
-        local old = os.cd("$(vendor-base64)")
+        local old = os.cd(vendor["base64"])
         if not os.exists("lib/libbase64.o") then
             cprint("${green bright}(vendor) ${clear}build ${magenta bright}base64 ${clear} ...")
             os.runv("make", {}, {envs = {AVX2_CFLAGS = "-mavx2"}})

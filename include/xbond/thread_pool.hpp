@@ -10,7 +10,7 @@ public:
     template <class Proc, class ... Args>
     thread_pool(int pool_size, Proc&& proc, Args&&... args) {
         for (int i=0;i<pool_size;++i) worker_.emplace_back(
-            std::thread(std::forward<Proc>(proc), std::forward<Args>(args)...));
+            std::forward<Proc>(proc), std::forward<Args>(args)...);
     }
     inline void wait() {
         join();

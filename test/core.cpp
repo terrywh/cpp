@@ -1,20 +1,22 @@
 #include <xbond/snowflake.hpp>
+#include <xbond/reference_pointer.hpp>
 #include <boost/json.hpp>
 #include <iostream>
 using namespace xbond;
 
 extern int core_coroutine_test(int argc, char* argv[]);
-extern int core_channel_test(int argc, char* argv[]);
 
 int core_test(int argc, char* argv[]) {
-    std::cout << __func__ << ":\n\t";
+    std::cout << __func__ << ":\n";
+    snowflake sf;
+    for (int i=0; i<10; ++i)
+        std::cout << "\tsnowflake = " << sf.next() << "\n";
 
-    boost::json::value a = boost::json::parse(R"({"a":1})");
-    std::cout << a << std::endl;
-    auto x = boost::json::value_to<std::uint64_t>(a.get_object().at("a"));
-    std::cout << x << std::endl;
-
+    auto r = std::make_shared<std::function<void (boost::system::error_code error)>>([] (boost::system::error_code error) {
+        std::cout << "\treference_ptr (error_code)\n";
+    });
+    reference_pointer(std::move(r))({});
+    
     core_coroutine_test(argc, argv);
-    core_channel_test(argc, argv);
     return 0;
 }

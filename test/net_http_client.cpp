@@ -12,7 +12,7 @@ int net_http_client_test(int argc, char* argv[]) {
     std::srand(std::time(nullptr));
     for (int i=0;i<8;++i) {
         coroutine::start(io, [&io, i] (coroutine_handler& ch) {
-            time::sleep(std::chrono::milliseconds(i * 20));
+            time::sleep_for(std::chrono::milliseconds(i * 20), ch);
             net::http::client cli{io};
             for (int j=0;j<50;++j) {
                 boost::beast::http::request<boost::beast::http::empty_body> req {boost::beast::http::verb::get, "/", 11};

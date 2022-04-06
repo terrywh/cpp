@@ -1,6 +1,7 @@
 #pragma once
 #include "detail/address_storage.hpp"
 #include <optional>
+#include <string>
 
 namespace xbond {
 namespace net {

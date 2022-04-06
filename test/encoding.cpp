@@ -8,7 +8,8 @@
 using namespace xbond;
 
 static std::string load_from_file(const char* file) {
-    std::ifstream fs("libxbond.a");
+    std::ifstream fs("./build/linux/x86_64/debug/libxbond.a");
+    assert(fs.is_open());
     fs.seekg(0, std::ifstream::end);
     std::size_t size = fs.tellg();
     std::string data;

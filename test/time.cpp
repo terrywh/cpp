@@ -27,6 +27,6 @@ int time_test(int argc, char* argv[]) {
     });
     thread_pool pool { 4, [] (boost::asio::io_context& io) {
         io.run();
-    }, io);
+    }, std::ref(io) };
     return 0;
 }
