@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/json/basic_parser_impl.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/utility/string_view.hpp>
 #include <stack>
 
 namespace xbond {

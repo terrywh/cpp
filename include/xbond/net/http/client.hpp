@@ -29,7 +29,7 @@ class client {
     std::shared_ptr<detail::client_socket_manager> manager_;
  public:
     // 构建客户端
-    client(boost::asio::io_context& io, option opt = option())
+    client(boost::asio::io_context& io, option opt = {})
     : io_(io)
     , option_(opt)
     , manager_(std::make_shared<detail::client_socket_manager>(io, option_.keepalive)) {
