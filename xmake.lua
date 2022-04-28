@@ -2,7 +2,7 @@ set_project("ark_proxy")
 set_languages("c17","cxx17")
 
 local vendor = {
-    ["boost"]  = "/data/vendor/boost-1.75",
+    ["boost"]  = "/data/vendor/boost-1.79",
     ["openssl"] = "/data/vendor/openssl-1.1",
     ["gsl"] = os.scriptdir() .. "/vendor/gsl",
     ["date"] = os.scriptdir() .. "/vendor/date",
@@ -62,6 +62,7 @@ target("xbond")
     add_rules("mode.debug", "mode.release", "mode.releasedbg")
     add_options("vendor-boost", "vendor-openssl")
     add_deps("gsl", "date", "base64")
+    add_defines("BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC")
     add_cxxflags("-fPIC")
     add_links("pthread")
     add_includedirs("include", {public = true})
@@ -74,5 +75,6 @@ target("xbond-test")
     add_rules("mode.debug")
     add_options("vendor-boost", "vendor-openssl")
     add_deps("xbond")
+    add_defines("BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC")
     add_includedirs("include")
     add_files("test/**.cpp")

@@ -5,10 +5,11 @@
 #include <xbond/encoding/utf8.hpp>
 #include <libbase64.h>
 #include <iostream>
+#include <chrono>
 using namespace xbond;
 
 static std::string load_from_file(const char* file) {
-    std::ifstream fs("./build/linux/x86_64/debug/libxbond.a");
+    std::ifstream fs(file);
     assert(fs.is_open());
     fs.seekg(0, std::ifstream::end);
     std::size_t size = fs.tellg();
@@ -18,12 +19,10 @@ static std::string load_from_file(const char* file) {
     return data;
 }
 
-static std::string large_data = load_from_file("libxbond.a");
-
 int encoding_base64_test(int argc, char* argv[]) {
     std::cout << __func__ << "\n";
     std::string o, r;
-   
+    std::string large_data = load_from_file("./build/linux/x86_64/debug/libxbond.a");
     auto begin = std::chrono::high_resolution_clock::now();
     for (int i=0;i<100;++i) {
         r = encoding::base64::encode(large_data);
