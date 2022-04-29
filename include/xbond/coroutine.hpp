@@ -28,17 +28,21 @@ public:
     // 指定错误返回（用于从异步流程带回错误）
     template <class ErrorT>
     basic_coroutine_handler& error(ErrorT& err) {
-        static_assert(std::is_same<ErrorT, boost::system::error_code>::value || std::is_same<ErrorT, std::error_code>::value, "only boost::system::error_code & std::error_code are supported");
         if constexpr(std::is_same<boost::system::error_code, ErrorT>::value) err1_ = &err;
         if constexpr(std::is_same<std::error_code, ErrorT>::value) err2_ = &err;
         return *this;
     }
     template <class ErrorT>
-    ErrorT& error() const {
-        static_assert(std::is_same<ErrorT, boost::system::error_code>::value || std::is_same<ErrorT, std::error_code>::value, "only boost::system::error_code & std::error_code are supported");
-        if constexpr(std::is_same<boost::system::error_code, ErrorT>::value) return *err1_;
-        if constexpr(std::is_same<std::error_code, ErrorT>::value) return *err2_;
-        throw std::runtime_error("error not set");
+    ErrorT* error() const {
+        if constexpr(std::is_same<boost::system::error_code, ErrorT>::value) return err1_;
+        if constexpr(std::is_same<std::error_code, ErrorT>::value) return err2_;
+        return nullptr;
+    }
+    template <class ErrorT>
+    basic_coroutine_handler& error(ErrorT* err) {
+        if constexpr(std::is_same<boost::system::error_code, ErrorT>::value) err1_ = err;
+        if constexpr(std::is_same<std::error_code, ErrorT>::value) return err2_ = err;
+        return *this;
     }
     operator boost::system::error_code&() const { return *err1_; }
     operator std::error_code&() const { return *err2_; }
@@ -131,7 +135,7 @@ public:
     static std::shared_ptr<coroutine> current() {
         return current_.lock();
     }
-    // 注意：请使用 go 创建并启动协程
+    // 注意：请使用 start 创建并启动协程
     template <class Executor>
     explicit coroutine(const Executor& ex)
     : strand_(ex)

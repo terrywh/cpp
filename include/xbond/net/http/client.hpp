@@ -17,7 +17,7 @@ class client {
     struct option {
         option()
         :   timeout(std::chrono::seconds(5))
-        , keepalive(std::chrono::seconds(45)) {}
+        , keepalive(std::chrono::seconds(50)) {}
 
         std::chrono::steady_clock::duration   timeout; // default 5  seconds
         std::chrono::steady_clock::duration keepalive; // default 50 seconds (if "Connection: Keep-Alive" is present)
