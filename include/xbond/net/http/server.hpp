@@ -102,7 +102,7 @@ public:
     }
 };
 
-template <class Buffer>
+template <class Buffer = boost::beast::flat_static_buffer<4096UL>>
 std::shared_ptr<server<Buffer>> make_server(boost::asio::io_context& io, boost::asio::ip::tcp::endpoint bind, bool reuse_port = false) {
     return std::make_shared<server<Buffer>>(io, bind, reuse_port);
 }

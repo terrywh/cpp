@@ -32,7 +32,7 @@ int net_http_server_test(int argc, char* argv[]) {
         }
         asio::async_write(stream, http::make_chunk_last(), ch[error]);
 ON_ERROR:
-        std::cout << "error = " << error << std::endl;
+        ;
     });
     coroutine::start(io, [svr] (coroutine_handler ch) {
         svr->run(ch);
