@@ -27,7 +27,6 @@ private:
     boost::asio::io_context&                   context_;
     boost::asio::ip::tcp::acceptor            acceptor_;
     std::map<boost::string_view, handler_type> handler_;
-    handler_type handler_notfound_;
 
 public:
     server(boost::asio::io_context& io, boost::asio::ip::tcp::endpoint bind, bool reuse_port = false)
@@ -37,15 +36,19 @@ public:
         boost::asio::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> opt_reuse_port(reuse_port);
         acceptor_.set_option(opt_reuse_port);
 #endif
-        handler_notfound_ = [] (boost::beast::tcp_stream& stream, Buffer& buffer, server_parser& parser, coroutine_handler& ch) {
-            // boost::beast::http::request_parser<boost::beast::http::string_body> request { std::move(parser) };
-            // boost::beast::http::async_read(stream, buffer, request, ch);
-
+        handle(":status:404", [] (boost::beast::tcp_stream& stream, Buffer& buffer, server_parser& parser, coroutine_handler& ch) {
             boost::beast::http::response<boost::beast::http::empty_body> not_found(boost::beast::http::status::not_found, 11);
             not_found.keep_alive(parser.get().keep_alive());
             not_found.prepare_payload();
             boost::beast::http::async_write(stream, not_found, ch);
-        };
+        });
+        handle(":status:500", [] (boost::beast::tcp_stream& stream, Buffer& buffer, server_parser& parser, coroutine_handler& ch) {
+            boost::beast::http::response<boost::beast::http::empty_body> internal_server_error(boost::beast::http::status::internal_server_error, 11);
+            internal_server_error.keep_alive(parser.get().keep_alive());
+            internal_server_error.prepare_payload();
+            boost::beast::http::async_write(stream, internal_server_error, ch);
+        });
+        
     }
     server(const server&) = delete;
     server(server&&) = delete;
@@ -57,37 +60,14 @@ public:
             auto stream = std::make_shared<boost::beast::tcp_stream>(context_);
             acceptor_.async_accept(stream->socket(), ch[error]);
             if (error) break;
-            coroutine::start(context_, 
-                [this, stream, server = this->shared_from_this()] (coroutine_handler& ch) mutable {
-                boost::system::error_code error;
-                Buffer buffer;
-                while (true) {
-                    std::unique_ptr<server_parser> parser = std::make_unique<server_parser>();
-                    boost::beast::http::async_read_header(*stream, buffer, *parser, ch[error]);
-                    if (error) break;
-
-                    before_handle(*stream, buffer, *parser, ch[error]);
-
-                    if (auto i = handler_.find(parser->get().target()); i != handler_.end()) i->second(*stream, buffer, *parser, ch[error]);
-                    else handler_notfound_(*stream, buffer, *parser, ch[error]); // 未匹配的 404 响应
-
-                    after_handle(*stream, buffer, *parser, ch[error]);
-                    // 将 handle 未处理的 body 进行忽略读取后继续下次请求
-                    if (error || parser->get().target().empty()) continue;
-                    if (!parser->is_done()) {
-                        boost::beast::http::request_parser<null_body> file { std::move(*parser) };
-                        boost::beast::http::async_read(*stream, buffer, file, ch[error]);
-                    }
-                    if (error) break;
-                }
-                stream->socket().close(error);
+            coroutine::start(context_, [this, stream, self = this->shared_from_this()] (xbond::coroutine_handler& ch) {
+                run_handler(stream, ch);
             });
         }
         if (error && origin) *origin = error;
         ch.error(origin);
     }
 
-    void not_found(handler_type handler) { handler_notfound_ = handler; }
     /**
      * @param path 调用者需保证 path 指向的字符串在服务器执行期间有效
      */
@@ -99,6 +79,38 @@ public:
     void close() {
         boost::system::error_code error;
         acceptor_.close(error);
+    }
+
+private:
+    void run_handler(std::shared_ptr<boost::beast::tcp_stream> stream, xbond::coroutine_handler& ch) {
+        boost::system::error_code error;
+        Buffer buffer;
+        while (true) {
+            std::unique_ptr<server_parser> parser = std::make_unique<server_parser>();
+            boost::beast::http::async_read_header(*stream, buffer, *parser, ch[error]);
+            if (error) break;
+
+            before_handle(*stream, buffer, *parser, ch[error]);
+            
+            if (!run_handler(parser->get().target(), *stream, buffer, *parser, ch[error]))
+                run_handler(":status:404", *stream, buffer, *parser, ch[error]);
+            if (error) run_handler(":status:500", *stream, buffer, *parser, ch[error]);
+
+            after_handle(*stream, buffer, *parser, ch[error]);
+            
+            if (error || parser->get().target().empty()) continue;
+            if (!parser->is_done()) { // 将 handle 未处理的 body 进行忽略读取后继续下次请求
+                boost::beast::http::request_parser<null_body> file { std::move(*parser) };
+                boost::beast::http::async_read(*stream, buffer, file, ch[error]);
+            }
+            if (error) break;
+        }
+        stream->socket().close(error);
+    }
+
+    bool run_handler(boost::string_view path, boost::beast::tcp_stream& stream, Buffer& buffer, server_parser& req, coroutine_handler& ch) {
+        if (auto i=handler_.find(path); i!=handler_.end()) { i->second(stream, buffer, req, ch); return true; }
+        else return false;
     }
 };
 

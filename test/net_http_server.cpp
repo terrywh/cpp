@@ -15,7 +15,7 @@ int net_http_server_test(int argc, char* argv[]) {
     boost::asio::io_context io;
     auto svr = net::http::make_server<boost::beast::flat_static_buffer<4096>>(io, net::address{"127.0.0.1:8888"});
     svr->handle("/world", [] (boost::beast::tcp_stream &stream, boost::beast::flat_static_buffer<4096UL> &buffer, net::http::server_parser& parser, xbond::coroutine_handler &ch) {
-        boost::system::error_code error;
+        boost::system::error_code& error = ch;
         http::request_parser<http::string_body> req { std::move(parser) };
         http::async_read(stream, buffer, req, ch[error]);
         LOGGER() << "req: " << req.get().body() << std::endl;
@@ -34,11 +34,15 @@ int net_http_server_test(int argc, char* argv[]) {
 ON_ERROR:
         ;
     });
+    svr->handle("/hello", [] (boost::beast::tcp_stream &stream, boost::beast::flat_static_buffer<4096UL> &buffer, net::http::server_parser& parser, xbond::coroutine_handler &ch) {
+        boost::system::error_code& error = ch;
+        error = {boost::asio::error::fault, boost::system::system_category()};
+    });
     coroutine::start(io, [svr] (coroutine_handler ch) {
         svr->run(ch);
     });
     coroutine::start(io, [svr] (coroutine_handler ch) {
-        time::sleep_for(std::chrono::seconds(2));
+        time::sleep_for(std::chrono::seconds(20));
         LOGGER() << "close" << std::endl;
         svr->close();
     });
