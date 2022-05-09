@@ -24,7 +24,7 @@ public:
         template <class ConstBufferSequence>
         std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& error) {
             error = {};
-            return boost::asio::buffer_size(buffers)
+            return boost::asio::buffer_size(buffers);
         }
         //
         void finish(boost::system::error_code& error) {
