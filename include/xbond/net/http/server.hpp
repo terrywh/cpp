@@ -92,7 +92,7 @@ private:
 
             before_handle(*stream, buffer, *parser, ch[error]);
             
-            if (!run_handler(parser->get().target(), *stream, buffer, *parser, ch[error]))
+            if (!run_handler(path(parser->get().target()), *stream, buffer, *parser, ch[error]))
                 run_handler(":status:404", *stream, buffer, *parser, ch[error]);
             if (error) run_handler(":status:500", *stream, buffer, *parser, ch[error]);
 
@@ -107,6 +107,11 @@ private:
         }
         stream->socket().close(error);
     }
+
+    boost::string_view path(boost::string_view uri) {
+        if (std::size_t i = uri.find_first_of('?'); i == uri.npos) return uri;
+        else return uri.substr(0, i);
+    } 
 
     bool run_handler(boost::string_view path, boost::beast::tcp_stream& stream, Buffer& buffer, server_parser& req, coroutine_handler& ch) {
         if (auto i=handler_.find(path); i!=handler_.end()) { i->second(stream, buffer, req, ch); return true; }
