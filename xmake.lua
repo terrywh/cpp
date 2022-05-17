@@ -7,6 +7,7 @@ local vendor = {
     ["gsl"] = os.scriptdir() .. "/vendor/gsl",
     ["date"] = os.scriptdir() .. "/vendor/date",
     ["base64"] = os.scriptdir() .. "/vendor/base64",
+    ["vspp"] = os.scriptdir() .. "/vendor/vspp",
 }
 -- 
 option("vendor-boost")
@@ -57,11 +58,16 @@ target("base64")
     end)
     add_includedirs(vendor["base64"] .. "/include", {public = true})
 
+target("vspp")
+    set_kind("headeronly")
+    add_headerfiles("vendor/vspp/include/(vspp/**)")
+    add_includedirs(vendor["vspp"] .. "/include", {public = true})
+
 target("xbond")
     set_kind("static")
     add_rules("mode.debug", "mode.release", "mode.releasedbg")
     add_options("vendor-boost", "vendor-openssl")
-    add_deps("gsl", "date", "base64")
+    add_deps("gsl", "date", "base64", "vspp")
     add_defines("BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC")
     add_cxxflags("-fPIC")
     add_links("pthread")
