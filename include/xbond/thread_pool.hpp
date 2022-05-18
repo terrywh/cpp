@@ -17,7 +17,7 @@ public:
     }
     void join() {
         joined_ = true;
-        for (int i=0;i<worker_.size();++i) worker_[i].join();
+        for (std::size_t i=0;i<worker_.size();++i) worker_[i].join();
     }
     ~thread_pool() {
         if (!joined_) join();
