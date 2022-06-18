@@ -10,20 +10,36 @@ int net_http_client_test(int argc, char* argv[]) {
     LOGGER() << __func__ << "\n";
     boost::asio::io_context io;
     std::srand(std::time(nullptr));
+    coroutine::start(io, [&io] (coroutine_handler& ch) {
+        net::http::client cli{io};
+
+        boost::beast::http::request<boost::beast::http::empty_body> req {boost::beast::http::verb::get, "/", 11};
+        req.set(boost::beast::http::field::host, "www.qq.com");
+        req.keep_alive(true);
+
+        std::cout << req << std::endl;
+        boost::beast::http::response<boost::beast::http::string_body> rsp {};
+        boost::system::error_code error;
+        cli.execute(net::address{"www.qq.com",80}, req, rsp, ch[error]);
+        std::cout << error << ": " << error.message() << std::endl;
+        std::cout << rsp << std::endl;
+        rsp.body().clear();
+    });
+
     for (int i=0;i<8;++i) {
         coroutine::start(io, [&io, i] (coroutine_handler& ch) {
-            time::sleep_for(std::chrono::milliseconds(i * 20), ch);
+            time::sleep_for(std::chrono::milliseconds(i * 200), ch);
             net::http::client cli{io};
-            for (int j=0;j<50;++j) {
+            for (int j=0;j<10;++j) {
                 boost::beast::http::request<boost::beast::http::empty_body> req {boost::beast::http::verb::get, "/", 11};
                 req.set(boost::beast::http::field::host, "www.qq.com");
                 req.keep_alive(true);
                 boost::beast::http::response<boost::beast::http::string_body> rsp {};
                 boost::system::error_code error;
                 cli.execute(net::address{"www.qq.com",80}, req, rsp, ch[error]);
-                std::cout << (rsp.result_int() > 200 ? "." : "x") << std::flush;
+                std::cout << (rsp.result_int() >= 200 && rsp.result_int() < 500 ? "." : "x") << std::flush;
                 rsp.body().clear();
-                time::sleep_for(std::chrono::milliseconds(std::rand()%5), ch);
+                time::sleep_for(std::chrono::milliseconds(std::rand()%500), ch);
             }
         });
     }

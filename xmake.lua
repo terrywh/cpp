@@ -36,9 +36,12 @@ target("gsl")
 target("date")
     set_kind("object")
     set_optimize("faster")
-    add_headerfiles("vendor/date/include/(date/**.h)")
     add_files("vendor/date/src/tz.cpp", {defines = "USE_OS_TZDB"})
     add_includedirs(vendor["date"] .. "/include", {public = true})
+
+target("date-inc")
+    set_kind("headeronly")
+    add_headerfiles("vendor/date/include/(date/**.h)")
 
 target("base64")
     set_kind("object")

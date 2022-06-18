@@ -15,6 +15,17 @@ extern int net_client_test(int argc, char* argv[]);
 extern int net_tcp_server_test(int argc, char* argv[]);
 extern int net_http_test(int argc, char* argv[]);
 
+int net_address_test(int argc, char* argv[]) {
+    net::address addr("www.qq.com:443");
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+    addr = "1.1.1.1:2222";
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+    addr = "[2:2:2::2]:3333";
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+    addr = net::address{"106.53.137.138:8730"};
+    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+}
+
 int net_parse_query_test(int argc, char* argv[]) {
     LOGGER() << "\t" << __func__ << "\n";
     const char* url = "http://blog.terrywh.net/search?p1=12%2F34&p2=%E4%B8%AD%E5%9B%BD%E4%BA%BA";
@@ -77,13 +88,7 @@ int net_url_test(int argc, char* argv[]) {
 
 int net_test(int argc, char* argv[]) {
     LOGGER() << __func__ << "\n";
-    net::address addr("www.qq.com:443");
-    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
-    addr = "1.1.1.1:2222";
-    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
-    addr = "[2:2:2::2]:3333";
-    LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
-
+    net_address_test(argc, argv);
     net_device_test(argc, argv);
     net_hardware_address_test(argc, argv);
     net_url_test(argc, argv);

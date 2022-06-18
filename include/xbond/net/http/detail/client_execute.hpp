@@ -11,29 +11,31 @@ namespace net {
 namespace http {
 namespace detail {
 
-template <class RequestBody, class RequestField, class ResponseBody, class ResponseField, std::size_t BufferSize = 16 * 1024>
+template <class RequestBody, class ResponseBody, std::size_t BufferSize = 16 * 1024>
 struct client_execute_context {
     net::address address;
     std::chrono::steady_clock::duration timeout;
-    boost::beast::http::request<RequestBody, RequestField>&    request;
-    boost::beast::http::response<ResponseBody, ResponseField>& response;
+    boost::beast::http::request<RequestBody>&    request;
+    boost::beast::http::response_parser<ResponseBody>& response;
     boost::beast::flat_static_buffer<BufferSize> buffer;
     std::unique_ptr<boost::beast::tcp_stream> stream;
 
     client_execute_context(boost::asio::io_context& io, net::address addr,
         std::chrono::steady_clock::duration to,
-        boost::beast::http::request<RequestBody, RequestField>& req,
-        boost::beast::http::response<ResponseBody, ResponseField>& rsp)
+        boost::beast::http::request<RequestBody>& req,
+        boost::beast::http::response_parser<ResponseBody>& rsp)
     : address(addr)
     , timeout(to)
-    , request(req), response(rsp) {}
+    , request(req), response(rsp) {
+        
+    }
 
 };
-template <class RequestBody, class RequestField, class ResponseBody, class ResponseField>
+template <class RequestBody, class ResponseBody>
 class client_execute: public boost::asio::coroutine {
 
  public:
-    using context_type = client_execute_context<RequestBody, RequestField, ResponseBody, ResponseField>;
+    using context_type = client_execute_context<RequestBody, ResponseBody>;
 
  private:
     std::shared_ptr<detail::client_socket_manager> manager_;

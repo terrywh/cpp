@@ -15,12 +15,10 @@ class client {
  public:
     // 客户端选项
     struct option {
-        option()
-        :   timeout(std::chrono::seconds(5))
-        , keepalive(std::chrono::seconds(50)) {}
-
-        std::chrono::steady_clock::duration   timeout; // default 5  seconds
-        std::chrono::steady_clock::duration keepalive; // default 50 seconds (if "Connection: Keep-Alive" is present)
+        std::chrono::steady_clock::duration   timeout = std::chrono::seconds(5);  // default 5  seconds
+        std::chrono::steady_clock::duration keepalive = std::chrono::seconds(50); // default 50 seconds (if "Connection: Keep-Alive" is present)
+        std::uint64_t header_limit = 8 * 1024ul;        // 响应头限制
+        std::uint64_t body_limit   = 8 * 1024 * 1024ul; // 响应体限制
     };
 
  private:
@@ -29,7 +27,7 @@ class client {
     std::shared_ptr<detail::client_socket_manager> manager_;
  public:
     // 构建客户端
-    client(boost::asio::io_context& io, option opt = {})
+    client(boost::asio::io_context& io, const option& opt = {})
     : io_(io)
     , option_(opt)
     , manager_(std::make_shared<detail::client_socket_manager>(io, option_.keepalive)) {
@@ -39,16 +37,25 @@ class client {
         manager_->close();
     }
     // 执行请求
-    template <class RequestBody, class RequestField, class ResponseBody, class ResponseField, class CompletionToken>
-    auto execute(const address& addr, boost::beast::http::request<RequestBody, RequestField>& req,
-        boost::beast::http::response<ResponseBody, ResponseField>& rsp, CompletionToken&& handler) -> 
-            typename boost::asio::async_result<typename std::decay<CompletionToken>::type,
-                void(boost::system::error_code)>::return_type {
+    template <class RequestBody, class ResponseBody, class CompletionToken>
+    void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
+        boost::beast::http::response<ResponseBody>& rsp, CompletionToken&& handler) {
         
-        return boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
-            detail::client_execute<RequestBody, RequestField, ResponseBody, ResponseField>(
+        boost::beast::http::response_parser<ResponseBody> parser { std::move(rsp) };
+        parser.header_limit(option_.header_limit);
+        parser.body_limit(option_.body_limit);
+        
+        execute(addr, req, parser, std::forward<CompletionToken>(handler));
+        rsp = parser.release();
+    }
+
+    template <class RequestBody, class ResponseBody, class CompletionToken>
+    void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
+        boost::beast::http::response_parser<ResponseBody>& rsp, CompletionToken&& handler) {
+        boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
+            detail::client_execute<RequestBody, ResponseBody>(
                 manager_,
-                std::make_shared<detail::client_execute_context<RequestBody, RequestField, ResponseBody, ResponseField, BufferSize>>(
+                std::make_shared<detail::client_execute_context<RequestBody, ResponseBody, BufferSize>>(
                     io_, addr, option_.timeout, req, rsp
                 )
             ), handler, io_
