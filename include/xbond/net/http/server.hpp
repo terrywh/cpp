@@ -26,12 +26,17 @@ public:
 private:
     boost::asio::io_context&                   context_;
     boost::asio::ip::tcp::acceptor            acceptor_;
+    boost::asio::ip::tcp::endpoint             address_;
     std::map<boost::string_view, handler_type> handler_;
 
 public:
     server(boost::asio::io_context& io, boost::asio::ip::tcp::endpoint bind, bool reuse_port = false)
     :  context_(io)
-    , acceptor_(io, bind) {
+    , acceptor_(io)
+    ,  address_(bind) {
+        acceptor_.open(address_.protocol());
+        boost::asio::socket_base::reuse_address opt_reuse_addr {true};
+        acceptor_.set_option(opt_reuse_addr);
 #ifdef SO_REUSEPORT
         boost::asio::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> opt_reuse_port(reuse_port);
         acceptor_.set_option(opt_reuse_port);
@@ -55,6 +60,8 @@ public:
     virtual ~server() = default;
     void run(coroutine_handler& ch) {
         boost::system::error_code error, *origin = ch.error<boost::system::error_code>();
+        acceptor_.bind(address_, error);
+        if (error) goto RETURN_ERROR;
         acceptor_.listen(boost::asio::socket_base::max_listen_connections, error);
         while (!error) {
             auto stream = std::make_shared<boost::beast::tcp_stream>(context_);
@@ -64,6 +71,7 @@ public:
                 run_handler(stream, ch);
             });
         }
+        RETURN_ERROR:
         if (error && origin) *origin = error;
         ch.error(origin);
     }

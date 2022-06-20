@@ -18,11 +18,11 @@ int time_test(int argc, char* argv[]) {
     std::cout << "\t" << time::iso(time::delta_clock::get()) << "\n";
     boost::asio::io_context io;
     
-    time::tick(io, std::chrono::seconds(3), [] (boost::system::error_code error) {
+    time::tick(io, std::chrono::seconds(2), [] (boost::system::error_code error) {
         std::cout << "\t tick\n";
     });
-    time::after(io, std::chrono::seconds(10), [&io] (boost::system::error_code error) {
-        std::cout << "\t" << "stop ticker:\n";
+    time::after(io, std::chrono::seconds(5), [&io] (boost::system::error_code error) {
+        std::cout << "\t stop\n";
         io.stop();
     });
     thread_pool pool { 4, [] (boost::asio::io_context& io) {
