@@ -70,6 +70,7 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
         acceptor_.set_option(opt_reuse_port);
 #endif
     }
+    // 异步启动，与 run() 二选一使用
     boost::system::error_code start() {
         boost::system::error_code error;
         acceptor_.bind(address_, error);
@@ -79,6 +80,7 @@ class tcp_server: public std::enable_shared_from_this<tcp_server<Session>> {
         do_accept();
         return error;
     }
+    // 协程启动，与 start() 二选一使用
     void run(coroutine_handler& ch) {
         boost::system::error_code error, *origin = ch.error<boost::system::error_code>();
         acceptor_.bind(address_, error);
