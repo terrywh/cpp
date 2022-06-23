@@ -1,5 +1,4 @@
 #include <xbond/net/http/detail/client_socket_manager.hpp>
-#include <xbond/reference_pointer.hpp>
 
 namespace xbond {
 namespace net {
