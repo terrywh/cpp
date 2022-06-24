@@ -1,6 +1,7 @@
 #pragma once
 #include "../detail/to_string_view.hpp"
 #include "../strconv/parse_string.hpp"
+#include <netinet/in.h>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <sstream>
@@ -44,6 +45,9 @@ public:
         host_.assign(sv.data(), sv.size());
         svc_ = std::to_string(port_);
     }
+
+    address(const struct sockaddr_in& addr);
+    address(const struct sockaddr_in6& addr);
 
     address(const address& addr) = default;
     // 域名/地址
