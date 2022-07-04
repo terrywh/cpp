@@ -1,13 +1,14 @@
 #include <xbond/net/address.hpp>
 #include <xbond/utility.hpp>
+#include <boost/endian/conversion.hpp>
 
 namespace xbond {
 namespace net {
 
 address::address(const struct sockaddr_in& sin) {
-    boost::asio::ip::address_v4 addr {sin.sin_addr.s_addr};
+    boost::asio::ip::address_v4 addr { boost::endian::big_to_native(sin.sin_addr.s_addr) };
     host_ = addr.to_string();
-    port_ = sin.sin_port;
+    port_ = boost::endian::big_to_native(sin.sin_port);
     svc_  = std::to_string(port_);
 }
 
