@@ -13,14 +13,13 @@ int tzone_test(int argc, char* argv[]) {
     using namespace xbond::time;
     auto now = make_zoned(current_zone(), std::chrono::system_clock::now());
     std::cout << "\t\toffset: " << now.get_info().offset << "\n";
-    // auto now_date = time::floor<time::days>(now);
-    // auto now_time = time::make_time(std::chrono::duration_cast<std::chrono::milliseconds>(now-now_date));
-    time::hh_mm_ss<std::chrono::system_clock::duration> dst_time {
-        std::chrono::hours(1) + std::chrono::seconds(math::rand::integer(0, 5400)) - now.get_info().offset
-    };
-    auto dst = make_zoned(current_zone(), time::floor<time::days>(now.get_sys_time()) + dst_time.to_duration());
+    auto now_time = make_time(now.get_local_time() - time::floor<time::days>(now.get_local_time()));
+    auto dst = make_zoned(current_zone(), time::floor<time::days>(now.get_sys_time()) + 
+        std::chrono::hours(1) + std::chrono::seconds(math::rand::integer(0, 5400)) - now.get_info().offset);
+    auto dst_time = make_time(dst.get_local_time() - time::floor<time::days>(dst.get_local_time()));
     std::cout << "\t\t" << now << " ~ " << dst << "\n";
     std::cout << "\t\t" << now.get_sys_time() << " ~ " << dst.get_sys_time() << "\n";
+    std::cout << "\t\t" << now_time.hours() << " ~ " << dst_time.hours() << "\n";
     return 0;
 }
 
