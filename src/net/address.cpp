@@ -1,6 +1,6 @@
 #include <xbond/net/address.hpp>
-#include <xbond/utility.hpp>
 #include <boost/endian/conversion.hpp>
+#include <xbond/detail/to_array.hpp>
 
 namespace xbond {
 namespace net {

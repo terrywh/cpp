@@ -31,8 +31,6 @@ extern int os_test(int argc, char* argv[]);
 // }
 
 int main(int argc, char* argv[]) {
-    std::cout << __func__ << ":\n\t";
-    
     core_test(argc, argv);
     encoding_test(argc, argv);
     hash_test(argc, argv);
