@@ -40,7 +40,11 @@ struct parser_handler {
     std::string cache_;
 
     void put(std::string val) {
-        if (context_.top().path.empty()) 
+        if (context_.empty()) {
+            context_.push(context_t{root_});
+            root_.put_value(val);
+        }
+        else if (context_.top().path.empty()) 
             context_.top().node.push_back(std::make_pair("", boost::property_tree::ptree{val}));
         else
             context_.top().node.put(context_.top().path, val);

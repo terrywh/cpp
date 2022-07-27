@@ -76,8 +76,23 @@ int encoding_json_test(int argc, char* argv[]) {
     std::cout << "\t\t" << front.get_child("msg_app_user.msg_user_extent_info.str_contact_phone_number_list").front().second.get_value<std::string>() << std::endl;
 
     boost::property_tree::ptree ctr2;
-    std::string raw2 = R"([{"A":"a"}, "a"])";
+    std::string raw2 = R"([{
+        "A":"a"}, "a",
+    ])";
     encoding::json::decode(raw2, ctr2);
+    std::cout << "\t\t";
+    boost::property_tree::write_json(std::cout, ctr2, false);
+    boost::property_tree::ptree ctr3;
+    std::string raw3 = R"(400 Bad Request)";
+    try {
+        encoding::json::decode(raw3, ctr3);
+    } catch(const std::exception& ex) {
+        std::cout << "\t\texception: " << ex.what() << std::endl;
+    }
+    boost::property_tree::ptree ctr4;
+    std::string raw4 = R"(400)";
+    encoding::json::decode(raw4, ctr4);
+    std::cout << "\t\t" << ctr4.get_value<int>() << std::endl;
     return 0;
 }
 

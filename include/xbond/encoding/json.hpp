@@ -36,7 +36,8 @@ static void decode(const S& json, boost::property_tree::ptree& conf,
     std::string_view sv = xbond::detail::to_string_view(json);
     boost::system::error_code error;
     boost::json::basic_parser<detail::parser_handler> parser(options, conf);
-    parser.write_some(false, sv.data(), sv.size(), error);
+    if (std::size_t parsed = parser.write_some(false, sv.data(), sv.size(), error); parsed != sv.size() && !error)
+        error = boost::json::make_error_code(boost::json::error::extra_data);
     if (error) throw boost::system::system_error(error);
     // parser.done();
 }
