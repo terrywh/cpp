@@ -49,14 +49,18 @@ target("base64")
         local old = os.cd(vendor["base64"])
         if not os.exists("lib/libbase64.o") then
             cprint("${green bright}(vendor) ${clear}build ${magenta bright}base64 ${clear} ...")
-            os.runv("make", {}, {envs = {AVX2_CFLAGS = "-mavx2"}})
+            if is_arch("arm.*") then
+                os.runv("make", {}, {envs = {NEON64_CLAGS = "-mfpu=neon"}})
+            else
+                os.runv("make", {}, {envs = {AVX2_CFLAGS = "-mavx2"}})
+            end
         end
         os.cd(old)
         table.insert(target:objectfiles(), vendor["base64"] .. "/lib/libbase64.o")
     end)
     on_clean(function(target)
         local old = os.cd("$(vendor-base64)")
-        os.runv("make", {"clean"}, {envs = {AVX2_CFLAGS = "-mavx2"}})
+        os.runv("make", {"clean"}, {})
         os.cd(old)
     end)
     add_includedirs(vendor["base64"] .. "/include", {public = true})
