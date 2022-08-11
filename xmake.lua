@@ -80,7 +80,6 @@ target("xbond")
     add_links("pthread")
     add_includedirs("include", {public = true})
     add_files("src/**.cpp")
-    add_files("vendor/date/src/tz.cpp", {defines = {"USE_OS_TZDB=1"}})
     add_headerfiles("include/(xbond/**.hpp)")
 
 target("xbond-test")
