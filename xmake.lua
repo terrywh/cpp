@@ -36,6 +36,7 @@ target("gsl")
 target("date")
     set_kind("object")
     set_optimize("faster")
+    add_cxxflags("-fPIC")
     add_files("vendor/date/src/tz.cpp", {defines = "USE_OS_TZDB"})
     add_includedirs(vendor["date"] .. "/include", {public = true})
 
