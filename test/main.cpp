@@ -13,7 +13,7 @@ extern int net_test(int argc, char* argv[]);
 extern int strconv_test(int argc, char* argv[]);
 extern int time_test(int argc, char* argv[]);
 extern int os_test(int argc, char* argv[]);
-
+extern int net_http_client_test(int argc, char* argv[]);
 // int core_cancel(int argc, char* argv[]) {
 //     std::cout << __func__ << ":\n";
 //     boost::asio::io_context io;
@@ -31,6 +31,7 @@ extern int os_test(int argc, char* argv[]);
 // }
 
 int main(int argc, char* argv[]) {
+    return net_http_client_test(argc, argv);
     core_test(argc, argv);
     encoding_test(argc, argv);
     hash_test(argc, argv);

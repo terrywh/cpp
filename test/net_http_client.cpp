@@ -26,20 +26,19 @@ int net_http_client_test(int argc, char* argv[]) {
         rsp.body().clear();
     });
 
-    for (int i=0;i<8;++i) {
+    for (int i=0;i<2;++i) {
         coroutine::start(io, [&io, i] (coroutine_handler& ch) {
-            time::sleep_for(std::chrono::milliseconds(i * 200), ch);
             net::http::client cli{io};
-            for (int j=0;j<10;++j) {
+            for (int j=0;j<100;++j) {
+                time::sleep_for(std::chrono::milliseconds(i * 2500 + 5000), ch);
                 boost::beast::http::request<boost::beast::http::empty_body> req {boost::beast::http::verb::get, "/", 11};
                 req.set(boost::beast::http::field::host, "www.qq.com");
                 req.keep_alive(true);
                 boost::beast::http::response<boost::beast::http::string_body> rsp {};
                 boost::system::error_code error;
                 cli.execute(net::address{"www.qq.com",80}, req, rsp, ch[error]);
-                std::cout << (rsp.result_int() >= 200 && rsp.result_int() < 500 ? "." : "x") << std::flush;
+                std::cout << "." << std::flush;
                 rsp.body().clear();
-                time::sleep_for(std::chrono::milliseconds(std::rand()%500), ch);
             }
         });
     }
@@ -48,5 +47,6 @@ int net_http_client_test(int argc, char* argv[]) {
     });
     pool.wait();
     std::cout << "\n\t\t\tdone" << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     return 0;
 }

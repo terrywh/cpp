@@ -26,7 +26,7 @@ void client_socket_manager::close() {
 
 void client_socket_manager::sweep(const std::chrono::steady_clock::time_point& now) {
     for (auto i=cache_.begin(); i!=cache_.end(); ) {
-        if (now < i->second.expire)
+        if (now > i->second.expire)
             i = cache_.erase(i); // 清理超过有效时间的连接
         else
             ++i;

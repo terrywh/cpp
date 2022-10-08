@@ -1,8 +1,6 @@
 #pragma once
 #include "client_socket_manager.hpp"
 #include "../../address.hpp"
-#include <boost/beast/core/flat_static_buffer.hpp>
-#include <boost/beast/http/message.hpp>
 #include <boost/beast/http/write.hpp>
 #include <boost/beast/http/read.hpp>
 
@@ -11,26 +9,6 @@ namespace net {
 namespace http {
 namespace detail {
 
-template <class RequestBody, class ResponseBody, std::size_t BufferSize = 16 * 1024>
-struct client_execute_context {
-    net::address address;
-    std::chrono::steady_clock::duration timeout;
-    boost::beast::http::request<RequestBody>&    request;
-    boost::beast::http::response_parser<ResponseBody>& response;
-    boost::beast::flat_static_buffer<BufferSize> buffer;
-    std::unique_ptr<boost::beast::tcp_stream> stream;
-
-    client_execute_context(boost::asio::io_context& io, net::address addr,
-        std::chrono::steady_clock::duration to,
-        boost::beast::http::request<RequestBody>& req,
-        boost::beast::http::response_parser<ResponseBody>& rsp)
-    : address(addr)
-    , timeout(to)
-    , request(req), response(rsp) {
-        
-    }
-
-};
 template <class RequestBody, class ResponseBody>
 class client_execute: public boost::asio::coroutine {
 
@@ -50,7 +28,7 @@ class client_execute: public boost::asio::coroutine {
     template <class AsyncOperation>
     inline void operator () (AsyncOperation& self, boost::system::error_code error = {}, std::size_t size = 0) { BOOST_ASIO_CORO_REENTER(this) {
         // 解析域名并获得网络连接
-        BOOST_ASIO_CORO_YIELD manager_->acquire(context_->address, context_->stream, std::move(self));
+        BOOST_ASIO_CORO_YIELD manager_->acquire(context_, std::move(self));
         if (error) return self.complete(error);
         // 超时设置
         context_->stream->expires_after(context_->timeout);
@@ -66,10 +44,10 @@ class client_execute: public boost::asio::coroutine {
         context_->stream->expires_never();
         // 连接回收复用
         if (context_->response.need_eof()) context_->stream->close();
-        else BOOST_ASIO_CORO_YIELD manager_->release(context_->address, context_->stream, std::move(self));
+        else BOOST_ASIO_CORO_YIELD manager_->release(context_, std::move(self));
         // 成功响应回调
         self.complete({});
-    } }
+    }}
 };
 
 } // namespace detail

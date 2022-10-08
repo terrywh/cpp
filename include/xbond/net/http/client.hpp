@@ -37,22 +37,22 @@ class client {
         manager_->close();
     }
     // 执行请求
-    template <class RequestBody, class ResponseBody, class CompletionToken>
+    template <class RequestBody, class ResponseBody, class ExecuteHandler>
     void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
-        boost::beast::http::response<ResponseBody>& rsp, CompletionToken&& handler) {
+        boost::beast::http::response<ResponseBody>& rsp, ExecuteHandler&& handler) {
         
         boost::beast::http::response_parser<ResponseBody> parser { std::move(rsp) };
         parser.header_limit(option_.header_limit);
         parser.body_limit(option_.body_limit);
         
-        execute(addr, req, parser, std::forward<CompletionToken>(handler));
+        execute(addr, req, parser, std::forward<ExecuteHandler>(handler));
         rsp = parser.release();
     }
 
-    template <class RequestBody, class ResponseBody, class CompletionToken>
+    template <class RequestBody, class ResponseBody, class ExecuteHandler>
     void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
-        boost::beast::http::response_parser<ResponseBody>& rsp, CompletionToken&& handler) {
-        boost::asio::async_compose<CompletionToken, void(boost::system::error_code)>(
+        boost::beast::http::response_parser<ResponseBody>& rsp, ExecuteHandler&& handler) {
+        boost::asio::async_compose<ExecuteHandler, void(boost::system::error_code)>(
             detail::client_execute<RequestBody, ResponseBody>(
                 manager_,
                 std::make_shared<detail::client_execute_context<RequestBody, ResponseBody, BufferSize>>(
