@@ -16,7 +16,7 @@ class client {
     // 客户端选项
     struct option {
         std::chrono::steady_clock::duration   timeout = std::chrono::seconds(5);  // default 5  seconds
-        std::chrono::steady_clock::duration keepalive = std::chrono::seconds(50); // default 50 seconds (if "Connection: Keep-Alive" is present)
+        std::chrono::steady_clock::duration keepalive = std::chrono::seconds(45); // default 50 seconds (if "Connection: Keep-Alive" is present)
         std::uint64_t header_limit = 8 * 1024ul;        // 响应头限制
         std::uint64_t body_limit   = 8 * 1024 * 1024ul; // 响应体限制
     };

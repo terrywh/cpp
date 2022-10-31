@@ -24,6 +24,9 @@ class client_execute: public boost::asio::coroutine {
     : manager_(mgr)
     , context_(obj) {}
 
+    client_execute(const client_execute& ce) = default;
+    // client_execute(client_execute&& ce) = default; // 复制代替移动，防止下述函数调用流程由于 EVALUATION 顺序可能导致的问题
+
     // AsyncOperation == boost::asio::detail::composed_op< client_execute , void(boost::system::error_code) >
     template <class AsyncOperation>
     inline void operator () (AsyncOperation& self, boost::system::error_code error = {}, std::size_t size = 0) { BOOST_ASIO_CORO_REENTER(this) {
@@ -43,8 +46,9 @@ class client_execute: public boost::asio::coroutine {
         // 执行完毕（结束超时计时）
         context_->stream->expires_never();
         // 连接回收复用
-        if (context_->response.need_eof()) context_->stream->close();
-        else BOOST_ASIO_CORO_YIELD manager_->release(context_, std::move(self));
+        if (!context_->response.need_eof()) {
+            BOOST_ASIO_CORO_YIELD manager_->release(context_, std::move(self));
+        }
         // 成功响应回调
         self.complete({});
     }}

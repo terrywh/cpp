@@ -37,10 +37,6 @@ struct client_execute_context {
     , request(req), response(rsp) {
         
     }
-
-    ~client_execute_context() {
-        if (stream) std::cout << "x";
-    }
 };
 // 连接管理器，支持简单的复用机制
 class client_socket_manager : public std::enable_shared_from_this<client_socket_manager> {
@@ -49,7 +45,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     boost::asio::ip::tcp::resolver resolver_;
 
     struct cached_socket {
-        std::unique_ptr<boost::beast::tcp_stream> socket;
+        std::unique_ptr<boost::asio::ip::tcp::socket> socket;
         std::chrono::steady_clock::time_point     expire;
     };
     std::multimap<address, cached_socket> cache_;
@@ -72,7 +68,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
             // 找到还在有效期内的同目标地址的链接
             if (auto i = cache_.find(context->address); i != cache_.end()) {
                 if (std::chrono::steady_clock::now() < i->second.expire) {
-                    context->stream.swap(i->second.socket);
+                    context->stream = std::make_unique<boost::beast::tcp_stream>( std::move(*i->second.socket) );
                     cache_.erase(i);
                     boost::asio::post(context->strand, std::move(handler));
                     return;
@@ -93,7 +89,8 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     void release(std::shared_ptr<client_execute_context<RequestBody, ResponseBody, BufferSize>> context, AcquireHandler&& handler) {
         boost::asio::post(strand_, [this, context, handler = std::move(handler), self = shared_from_this()] () mutable {
             auto now = std::chrono::steady_clock::now();
-            cache_.emplace(std::make_pair(context->address, cached_socket{std::move(context->stream), now + ttl_}));
+            cache_.emplace(std::make_pair(context->address, cached_socket{
+                std::make_unique<boost::asio::ip::tcp::socket>(std::move(context->stream->release_socket())), now + ttl_}));
             boost::asio::post(context->strand, std::move(handler));
         });
     }
