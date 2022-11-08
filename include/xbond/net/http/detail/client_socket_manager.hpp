@@ -37,6 +37,13 @@ struct client_execute_context {
     , request(req), response(rsp) {
         
     }
+<<<<<<< HEAD
+=======
+
+    ~client_execute_context() {
+        // if (stream) std::cout << "x";
+    }
+>>>>>>> dda887c (尝试修复: 可能的超时引起的重复关闭问题;)
 };
 // 连接管理器，支持简单的复用机制
 class client_socket_manager : public std::enable_shared_from_this<client_socket_manager> {
