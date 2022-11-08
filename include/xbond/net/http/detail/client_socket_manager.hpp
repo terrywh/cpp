@@ -37,13 +37,6 @@ struct client_execute_context {
     , request(req), response(rsp) {
         
     }
-<<<<<<< HEAD
-=======
-
-    ~client_execute_context() {
-        // if (stream) std::cout << "x";
-    }
->>>>>>> dda887c (尝试修复: 可能的超时引起的重复关闭问题;)
 };
 // 连接管理器，支持简单的复用机制
 class client_socket_manager : public std::enable_shared_from_this<client_socket_manager> {
@@ -85,7 +78,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
             // 建立新的连接：使用 context::strand 保持其超时
             context->stream = std::make_unique<boost::beast::tcp_stream>(context->strand);
             boost::asio::async_compose<AcquireHandler, void(boost::system::error_code)>(
-                net::detail::socket_connect<boost::asio::ip::tcp>(context->stream->socket(), context->address, resolver_),
+                net::detail::socket_connect<boost::asio::ip::tcp>(*context->stream->socket(), context->address, resolver_),
                 handler, *context->stream, resolver_, context->strand
             );
         });
