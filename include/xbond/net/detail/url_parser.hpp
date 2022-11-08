@@ -27,7 +27,7 @@ typedef struct url_s {
     std::string user;
     std::string password;
     std::string domain;
-    int         port;
+    std::uint16_t port;
     std::string path;  // 含起始 "/" 符号
     std::string query; // 含起始 "?" 符号
     std::string hash;  // 含起始 "#" 符号
@@ -61,7 +61,7 @@ struct url_parser: boost::spirit::qi::grammar<Iterator, url_t()> {
         start = -(scheme[output<std::string>(u.scheme)] >> "://")
             >> -(user[output<std::string>(u.user)] >> -(':' >> password[output<std::string>(u.password)]) >> '@')
             >> domain[output<std::string>(u.domain)]
-            >> -(':' >> port[output<int>(u.port)])
+            >> -(':' >> port[output<std::uint16_t>(u.port)])
             >> -path[output<std::string>(u.path)]
             >> -query[output<std::string>(u.query)]
             >> -hash[output<std::string>(u.hash)];

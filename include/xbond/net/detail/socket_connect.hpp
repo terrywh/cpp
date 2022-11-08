@@ -18,7 +18,7 @@ class socket_connect {
     : address_(address), resolver_(resolver), socket_(socket) {}
 
     template <class AsyncOperation>
-    void operator()(AsyncOperation& self, boost::system::error_code = {}) {
+    void operator()(AsyncOperation& self, boost::system::error_code error = {}) {
         resolver_.async_resolve(address_.host(), address_.service(), std::move(self));
     }
 
@@ -34,32 +34,32 @@ class socket_connect {
     }
 };
 
-template <class Protocol>
-class stream_connect {
-    const net::address&           address_;
-    typename Protocol::resolver& resolver_;
-    typename boost::beast::basic_stream<Protocol>& stream_;
+// template <class Protocol>
+// class stream_connect {
+//     const net::address&           address_;
+//     typename Protocol::resolver& resolver_;
+//     typename boost::beast::basic_stream<Protocol>& stream_;
 
- public:
-    stream_connect(boost::beast::basic_stream<Protocol>& socket, const net::address& address, typename Protocol::resolver& resolver)
-    : address_(address), resolver_(resolver), stream_(socket) {}
+//  public:
+//     stream_connect(boost::beast::basic_stream<Protocol>& socket, const net::address& address, typename Protocol::resolver& resolver)
+//     : address_(address), resolver_(resolver), stream_(socket) {}
 
-    template <class AsyncOperation>
-    void operator()(AsyncOperation& self, boost::system::error_code = {}) {
-        resolver_.async_resolve(address_.host(), address_.service(), std::move(self));
-    }
+//     template <class AsyncOperation>
+//     void operator()(AsyncOperation& self, boost::system::error_code = {}) {
+//         resolver_.async_resolve(address_.host(), address_.service(), std::move(self));
+//     }
 
-    template <class AsyncOperation>
-    void operator()(AsyncOperation& self, boost::system::error_code error, typename Protocol::resolver::results_type rt) {
-        if (error) return self.complete(error);
-        stream_.async_connect(rt, std::move(self));
-    }
+//     template <class AsyncOperation>
+//     void operator()(AsyncOperation& self, boost::system::error_code error, typename Protocol::resolver::results_type rt) {
+//         if (error) return self.complete(error);
+//         stream_.async_connect(rt, std::move(self));
+//     }
 
-    template <class AsyncOperation>
-    void operator()(AsyncOperation& self, boost::system::error_code error, typename Protocol::endpoint ep) {
-        return self.complete(error);
-    }
-};
+//     template <class AsyncOperation>
+//     void operator()(AsyncOperation& self, boost::system::error_code error, typename Protocol::endpoint ep) {
+//         return self.complete(error);
+//     }
+// };
 
 } // namespace detail
 } // namespace net

@@ -27,6 +27,12 @@ public:
     template <class S, typename = typename std::enable_if<detail::convertible_to_string_view<S>::value, S>::type>
     explicit address(const S& addr) {
         std::string_view sv = detail::to_string_view(addr);
+        if (sv.empty()) { // 空字符串同默认处理构造处理
+            host_ = "";
+            port_ = 0;
+            svc_ = "";
+            return;
+        }
         std::size_t idx = sv.find_last_of(':');
         if (idx == sv.npos) throw std::runtime_error("failed to parse: colon not found");
         // 忽略 IPv6 的包裹括号

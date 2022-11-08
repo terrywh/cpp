@@ -1,4 +1,5 @@
 #pragma once
+#include "address.hpp"
 #include "detail/url_parser.hpp"
 #include "../detail/to_string_view.hpp"
 
@@ -15,23 +16,24 @@ namespace net {
 /// @property std::string query    - 查询，含起始 "?" 符号
 /// @property std::string hash     - 哈希，含起始 "#" 符号
 class url: public detail::url_t {
-    bool parsed_;
+    bool empty_;
 
  public:
     // 构建一个“空”状态的 URL 对象
     url(int port = 0)
-    : parsed_(true) {
+    : empty_(true) {
         this->port = port;
     }
     /// 解析 URL 字符串构建 URL 对象
     /// @throws boost::spirit::qi::expectation_failure<std::string::iterator>
     ///    expect {ex.what_} got {ex.fisrt ~ ex.last}
     template <class S, typename = typename std::enable_if<xbond::detail::convertible_to_string_view<S>::value, S>::type>
-    url(const S& str, int port = 0)
-    : parsed_(false) {
+    url(const S& str, std::uint16_t port = 0)
+    : empty_(true) {
         this->port = port; 
 
         std::string_view sv = xbond::detail::to_string_view(str);
+        if (sv.empty()) return;
         bool r = false;
         r = boost::spirit::qi::parse(sv.begin(), sv.end(), detail::url_parser<std::string_view::const_iterator>(*this));
         // 按照目前的实现在发生解析错误时会抛出异常，故当解析失败时，函数并未返回 r == false
@@ -43,21 +45,28 @@ class url: public detail::url_t {
                 user.clear();
                 password.clear();
             }
-            parsed_ = true;
+            empty_ = false;
         }
     }
     // 
     void assign(const url& url) {
         operator=(url);
     }
+    operator xbond::net::address() const {
+        return { domain, port };
+    }
     url& operator =(const url& url) = default;
-    // 若发生了解析过程（如使用了复制或从字符串构建），确认解析结果
-    operator bool() const { return parsed_; };
+    
+    bool empty() const { return empty_; }
+    operator bool() const { return empty_; }
     // 重新构一个对应 URL 文本
     std::string str() const {
         std::stringstream ss;
         ss << *this;
         return ss.str();
+    }
+    std::string svc() const {
+        return std::to_string(port);
     }
     // 
     friend std::ostream& operator<<(std::ostream& os, const url& u) {
@@ -73,6 +82,8 @@ class url: public detail::url_t {
         return os;
     }
 };
+
+static const url& empty_url();
 
 } // namespace net
 } // namespace xbond
