@@ -51,16 +51,16 @@ target("base64")
         if not os.exists("lib/libbase64.o") then
             cprint("${green bright}(vendor) ${clear}build ${magenta bright}base64 ${clear} ...")
             if is_arch("arm.*") then
-                os.runv("make", {}, {envs = {NEON64_CLAGS = "-mfpu=neon"}})
+                os.runv("make", {}, {envs = {NEON64_CLAGS = "-mfpu=neon", CFLAGS = "-fPIC"}})
             else
-                os.runv("make", {}, {envs = {AVX2_CFLAGS = "-mavx2"}})
+                os.runv("make", {}, {envs = {AVX2_CFLAGS = "-mavx2", CFLAGS = "-fPIC"}})
             end
         end
         os.cd(old)
         table.insert(target:objectfiles(), vendor["base64"] .. "/lib/libbase64.o")
     end)
     on_clean(function(target)
-        local old = os.cd("$(vendor-base64)")
+        local old = os.cd(vendor["base64"])
         os.runv("make", {"clean"}, {})
         os.cd(old)
     end)

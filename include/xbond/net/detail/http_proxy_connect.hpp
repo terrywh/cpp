@@ -6,8 +6,6 @@
 #include <boost/asio/write.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/streambuf.hpp>
-#include <boost/beast/http/read.hpp>
-#include <boost/beast/http/string_body.hpp>
 
 namespace xbond {
 namespace net {
@@ -84,17 +82,18 @@ class http_proxy_connect {
     template <class AsyncOperation>
     void read_http_rsp(AsyncOperation& self) {
         buffer_.consume(buffer_.size());
-        auto rsp = std::make_shared<boost::beast::http::response<boost::beast::http::string_body>>();
-        boost::beast::http::async_read(socket_, buffer_, *rsp,
-            [rsp, self = std::move(self)] (const boost::system::error_code& error, std::size_t size) mutable {
-            if (rsp->result() != boost::beast::http::status::ok) self(
-                boost::system::error_code{
-                    boost::beast::errc::connection_refused,
-                    boost::beast::system_category()
-                }, size);
-            else self(error, size);
+        boost::asio::async_read_until(socket_, buffer_, boost::asio::string_view("\r\n\r\n"),
+            [&buffer = buffer_, self = std::move(self)] (const boost::system::error_code& error, std::size_t size) mutable {
+            // buffer.commit(size);
+            std::istream is(&buffer);
+            std::string rl;
+            std::getline(is, rl, ' ');
+            std::getline(is, rl, ' ');
+            buffer.consume(buffer.size());
+            // https://httpwg.org/specs/rfc9110.html#CONNECT
+            if (rl[0] == '2') return self(error, size); // HTTP/1.1 2xx YYYYYY
+            else return self(boost::asio::error::make_error_code(boost::asio::error::connection_refused), size);
         });
-        // boost::asio::async_read_until(socket_, boost::asio::dynamic_buffer(buffer_), boost::asio::string_view{"\r\n\r\n", 4}, std::move(self));
     }
 };
 

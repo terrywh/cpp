@@ -34,6 +34,7 @@ int net_async_connect_test(int argc, char* argv[]) {
             std::cout << "." << std::flush;
             xbond::time::sleep_for(std::chrono::milliseconds(200));
         }
+        std::cout << "\n";
     });
     coroutine::start(io, [&io] (coroutine_handler& ch) {
         boost::system::error_code error;
