@@ -37,7 +37,7 @@ class http_proxy_connect {
         switch(status_) {
         case status::connecting: 
             status_ = status::http_requesting;
-            resolver_.async_resolve(proxy_.domain, proxy_.svc(), std::move(self));
+            resolver_.async_resolve(proxy_.domain, proxy_.port, std::move(self));
             break;
         case status::http_requesting:
             status_ = status::http_responding;
@@ -60,7 +60,7 @@ class http_proxy_connect {
 
     template <class AsyncOperation>
     void operator()(AsyncOperation& self, boost::system::error_code error, typename Protocol::endpoint ep) {
-        if (error || proxy_.empty()) return self.complete(error);
+        if (error || proxy_.domain.empty() || proxy_.port.empty()) return self.complete(error);
         this->operator()(self); // 确认经由代理 HTTP / SOCKS5 或直连接口
     }
 
@@ -68,7 +68,7 @@ class http_proxy_connect {
     void write_http_req(AsyncOperation& self) {
         std::ostream req (&buffer_);
         std::stringstream auth;
-        auth << proxy_.user << ":" << proxy_.password;
+        auth << proxy_.username << ":" << proxy_.password;
         
         req << "CONNECT " << address_.str() << " HTTP/1.1\r\n"
             << "Host: " << address_.str() << "\r\n"

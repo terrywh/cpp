@@ -24,12 +24,32 @@ int net_address_test(int argc, char* argv[]) {
     LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
     addr = net::address{"106.53.137.138:8730"};
     LOGGER() << "\t" << addr << " / " << addr.service() << "\n";
+    return 0;
+}
+
+int net_url_test(int argc, char* argv[]) {
+    LOGGER() << "\t" << __func__<< "\n";
+    auto u1 = net::parse_url("https://user:pass@www.qq.com:443/path?query#hash");
+    LOGGER() << "\t\t" << u1 << "\n";
+    auto u2 = net::parse_url("user:pass@www.qq.com");
+    LOGGER() << "\t\t" << u2 << "\n";
+    auto u3 = net::parse_url("https://www.qq.com/path");
+    LOGGER() << "\t\t" << u3 << "\n";
+    auto u4 = net::parse_url("www.qq.com/path");
+    LOGGER() << "\t\t" << u4 << "\n";
+    auto u5 = net::parse_url("user@www.qq.com");
+    LOGGER() << "\t\t" << u5 << "\n";
+    auto u6 = net::parse_url("https://user@www.qq.com/path?query#hash", true);
+    LOGGER() << "\t\t" << u6 << "\n";
+    auto u7 = net::parse_url("user:pass", true);
+    LOGGER() << "\t\t" << u7 << "\n";
+    return 0;
 }
 
 int net_parse_query_test(int argc, char* argv[]) {
     LOGGER() << "\t" << __func__ << "\n";
     const char* url = "http://blog.terrywh.net/search?p1=12%2F34&p2=%E4%B8%AD%E5%9B%BD%E4%BA%BA";
-    net::url u { url };
+    net::url u = net::parse_url(url);
     LOGGER() << u.query << "\n";
     net::parse_query(u.query, [] (std::pair<std::string, std::string>&& entry) {
         std::pair<std::string, std::string> e { std::move(entry) };
@@ -55,34 +75,6 @@ int net_device_test(int argc, char* argv[]) {
 int net_hardware_address_test(int argc, char* argv[]) {
     LOGGER() << "\t" << __func__ << "\n";
     LOGGER() << "\t\t" << net::hardware_address() << "\n";
-    return 0;
-}
-
-int net_url_test(int argc, char* argv[]) {
-    LOGGER() << "\t" << __func__<< "\n";
-    net::url url, url2(443);
-    url = "https://user:pass@www.qq.com:443/path?query#hash"; // true
-    url2 = net::url("https://user@www.qq.com/path#hash", 443); // true
-    net::url url3("http://www.qq.com?query"); // true
-    net::url url4("http://www.qq.com"); // true
-    net::url url5("www.qq.com"); // false
-
-    LOGGER() << "\t\tscheme = " << url.scheme << "\n";
-    LOGGER() << "\t\tuser = " << url.user << "\n";
-    LOGGER() << "\t\tpassword = " << url.password << "\n";
-    LOGGER() << "\t\tdomain = " << url.domain << "\n";
-    LOGGER() << "\t\tport = " << url.port << "\n";
-    LOGGER() << "\t\tport = " << url2.port << "\n";
-    LOGGER() << "\t\tpath = " << url.path << "\n";
-    LOGGER() << "\t\tquery = " << url.query << "\n";
-    LOGGER() << "\t\thash = " << url.hash << "\n";
-    LOGGER() << "\t\turl2 = " << !!url2 << "\n";
-    LOGGER() << "\t\turl3 = " << !!url3 << "\n";
-    LOGGER() << "\t\turl4 = " << !!url4 << "\n";
-    LOGGER() << "\t\turl5 = " << !!url5 << "\n";
-
-    LOGGER() << "\t\turl = " << url << "\n";
-    LOGGER() << "\t\turl3 = " << url3 << "\n";
     return 0;
 }
 

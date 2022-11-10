@@ -14,7 +14,9 @@ int net_async_proxy_connect_test(int argc, char* argv[]) {
         boost::beast::tcp_stream stream(io);
         boost::asio::ip::tcp::resolver resolver(io);
         boost::asio::streambuf buffer;
-        net::async_connect(stream.socket(), buffer, net::url { "http://175.27.38.33:23457" }, net::address { "mirrors.tencent.com", 443}, resolver, ch[error]);
+        net::url url = net::parse_url("http://175.27.38.33:23457");
+        net::address addr { "mirrors.tencent.com", 443 };
+        net::async_connect(stream.socket(), buffer, url, addr, resolver, ch[error]);
         LOGGER() << "async_connect(stream/proxy): (" << error << ") " << error.message() << "\n";
 
     });
@@ -29,8 +31,9 @@ int net_async_connect_test(int argc, char* argv[]) {
         boost::system::error_code error;
         boost::asio::ip::tcp::resolver resolver(io);
         boost::asio::ip::tcp::socket   socket(io);
+        net::address address {"mirrors.tencent.com", 443};
         for (int i=0; i<20; ++i) {
-            net::async_connect(socket, net::address{"mirrors.tencent.com", 443}, resolver, ch[error]);
+            net::async_connect(socket, address, resolver, ch[error]);
             std::cout << "." << std::flush;
             xbond::time::sleep_for(std::chrono::milliseconds(200));
         }
@@ -40,7 +43,8 @@ int net_async_connect_test(int argc, char* argv[]) {
         boost::system::error_code error;
         boost::beast::tcp_stream stream(io);
         boost::asio::ip::tcp::resolver resolver(io);
-        net::async_connect(stream.socket(), net::address{"mirrors.tencent.com", 443}, resolver, ch[error]);
+        net::address address{"mirrors.tencent.com", 443};
+        net::async_connect(stream.socket(), address, resolver, ch[error]);
         LOGGER() << "async_connect(stream)\terror: " << error << "\n";
     });
     io.run();
