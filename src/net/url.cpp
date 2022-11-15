@@ -114,9 +114,40 @@ url parse_url(std::string_view str, bool copy) {
     return u;
 }
 
+
+
+#define COPY_STRING_VIEW(FIELD) FIELD(raw.data() + (u.FIELD.data() - u.raw.data()), u.FIELD.size())
+url::url(const url& u)
+: raw(u.raw)
+, COPY_STRING_VIEW(scheme)
+, COPY_STRING_VIEW(username)
+, COPY_STRING_VIEW(password)
+, COPY_STRING_VIEW(domain)
+, COPY_STRING_VIEW(port)
+, COPY_STRING_VIEW(path)
+, COPY_STRING_VIEW(query)
+, COPY_STRING_VIEW(hash) {
+
+}
+#undef COPY_STRING_VIEW
+
 url::operator xbond::net::address() const {
     return { domain, strconv::parse_string(port) };
 }
+#define ASSIGN_STRING_VIEW(FIELD) FIELD = std::string_view(raw.data() + (u.FIELD.data() - u.raw.data()), u.FIELD.size())
+url& url::operator =(const url& u) {
+    raw = u.raw;
+    ASSIGN_STRING_VIEW(scheme);
+    ASSIGN_STRING_VIEW(username);
+    ASSIGN_STRING_VIEW(password);
+    ASSIGN_STRING_VIEW(domain);
+    ASSIGN_STRING_VIEW(port);
+    ASSIGN_STRING_VIEW(path);
+    ASSIGN_STRING_VIEW(query);
+    ASSIGN_STRING_VIEW(hash);
+    return *this;
+}
+#undef ASSIGN_STRING_VIEW
 
 std::ostream& operator<<(std::ostream& os, const url& u) {
     if (u.raw.empty()) {

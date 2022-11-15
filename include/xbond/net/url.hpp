@@ -9,6 +9,10 @@ namespace net {
 class url {
     std::string raw;
  public:
+    url() = default;
+    url(const url& u);
+    url(url&& u) = default;
+
     std::string_view scheme;
     std::string_view username;
     std::string_view password;
@@ -18,7 +22,12 @@ class url {
     std::string_view query; // 含起始 "?" 符号
     std::string_view hash;  // 含起始 "#" 符号
 
+    bool empty() const {
+        return raw.empty() && domain.empty();
+    }
     operator xbond::net::address() const;
+    url& operator =(const url& u);
+    url& operator =(url&& u) = default;
 
     friend url parse_url(std::string&& url);
     friend url parse_url(std::string_view url, bool copy);
