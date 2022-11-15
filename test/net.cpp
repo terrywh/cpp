@@ -43,6 +43,8 @@ int net_url_test(int argc, char* argv[]) {
     LOGGER() << "\t\t" << u6 << "\n";
     auto u7 = net::parse_url("user:pass", true);
     LOGGER() << "\t\t" << u7 << "\n";
+    auto u8 = net::parse_url("", true);
+    LOGGER() << "\t\t" << u8 << "\n";
     return 0;
 }
 
