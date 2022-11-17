@@ -9,11 +9,11 @@ namespace net {
 namespace http {
 namespace detail {
 
-template <class RequestBody, class ResponseBody>
+template <class Executor, class RequestBody, class ResponseBody>
 class client_execute: public boost::asio::coroutine {
 
  public:
-    using context_type = client_execute_context<RequestBody, ResponseBody>;
+    using context_type = client_execute_context<Executor, RequestBody, ResponseBody>;
 
  private:
     std::shared_ptr<detail::client_socket_manager> manager_;
@@ -44,14 +44,14 @@ class client_execute: public boost::asio::coroutine {
         BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(*context_->stream, context_->buffer, context_->response, std::move(self));
 DONE:
         context_->stream->expires_never();
-        if (error) { // 发生异常（本身可能就是超时）
-            self.complete(error);
+        context_->error = error == boost::asio::error::operation_aborted ? boost::beast::error::timeout : error;
+            
+        if (error || context_->response.need_eof()) { // 发生异常（本身可能就是超时）
+            BOOST_ASIO_CORO_YIELD manager_->closing(context_, std::move(self));
         } else {
-            if (!context_->response.need_eof()) { // 连接回收复用
-                BOOST_ASIO_CORO_YIELD manager_->release(context_, std::move(self));
-            }
-            self.complete({});
+            BOOST_ASIO_CORO_YIELD manager_->release(context_, std::move(self));
         }
+        self.complete(context_->error);
     }}
 };
 

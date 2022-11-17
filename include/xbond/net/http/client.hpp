@@ -37,28 +37,29 @@ class client {
         manager_->close();
     }
     // 执行请求
+    template <class RequestBody, class ResponseBody>
+    void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
+        boost::beast::http::response<ResponseBody>& rsp, xbond::coroutine_handler& ch) {
+        boost::asio::async_compose<xbond::coroutine_handler&, void(boost::system::error_code)>(
+            detail::client_execute<decltype(ch.executor()), RequestBody, ResponseBody>(
+                manager_,
+                std::make_shared<detail::client_execute_context<decltype(ch.executor()), RequestBody, ResponseBody, BufferSize>>(
+                    ch.executor(), addr, option_.timeout, req, rsp // 使用当前协程对应的 STRAND 统一执行上下文
+                )
+            ), ch, ch.executor()
+        );
+    }
+    // 执行请求
     template <class RequestBody, class ResponseBody, class ExecuteHandler>
     void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
         boost::beast::http::response<ResponseBody>& rsp, ExecuteHandler&& handler) {
-        
-        boost::beast::http::response_parser<ResponseBody> parser { std::move(rsp) };
-        parser.header_limit(option_.header_limit);
-        parser.body_limit(option_.body_limit);
-        
-        execute(addr, req, parser, std::forward<ExecuteHandler>(handler));
-        rsp = parser.release();
-    }
-
-    template <class RequestBody, class ResponseBody, class ExecuteHandler>
-    void execute(const address& addr, boost::beast::http::request<RequestBody>& req,
-        boost::beast::http::response_parser<ResponseBody>& rsp, ExecuteHandler&& handler) {
         boost::asio::async_compose<ExecuteHandler, void(boost::system::error_code)>(
-            detail::client_execute<RequestBody, ResponseBody>(
+            detail::client_execute<boost::asio::io_context, RequestBody, ResponseBody>(
                 manager_,
-                std::make_shared<detail::client_execute_context<RequestBody, ResponseBody, BufferSize>>(
+                std::make_shared<detail::client_execute_context<boost::asio::io_context, RequestBody, ResponseBody, BufferSize>>(
                     io_, addr, option_.timeout, req, rsp
                 )
-            ), handler, io_
+            ), handler
         );
     }
 };
