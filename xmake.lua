@@ -2,8 +2,8 @@ set_project("ark_proxy")
 set_languages("c17","cxx17")
 
 local vendor = {
-    ["boost"]  = "/data/vendor/boost-1.79",
-    ["openssl"] = "/data/vendor/openssl-1.1",
+    ["boost"]  = "/data/htdocs/git.woa.com/wemeet-svr/wemeet-ark/wemeet-ark-api-proxy/thirdparty/boost/dist/linux_x64",
+    ["openssl"] = "/data/htdocs/git.woa.com/wemeet-svr/wemeet-ark/wemeet-ark-api-proxy/thirdparty/openssl/dist/linux_x64",
     ["gsl"] = os.scriptdir() .. "/vendor/gsl",
     ["date"] = os.scriptdir() .. "/vendor/date",
     ["base64"] = os.scriptdir() .. "/vendor/base64",

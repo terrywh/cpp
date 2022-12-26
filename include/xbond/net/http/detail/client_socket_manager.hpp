@@ -1,6 +1,7 @@
 #pragma once
 #include "../../address.hpp"
 #include "../../detail/socket_connect.hpp"
+#include "../../../time/date.hpp"
 #include "../../../time/timer.hpp"
 #include <boost/asio/compose.hpp>
 #include <boost/beast/core/flat_static_buffer.hpp>
@@ -42,7 +43,26 @@ struct client_execute_context {
     // ~client_execute_context() {
     //     std::cout << "X:" << this << std::endl;
     // }
+
+    void dump(const char* prefix) {
+        boost::system::error_code error;
+        std::stringstream ss1, ss2, ss3;
+        ss1 << address;
+        ss2 << stream->socket().remote_endpoint(error);
+        std::string ca = ss1.str(), cs = ss2.str();
+
+        ss3 << time::iso(std::chrono::system_clock::now()) 
+            << " <" << prefix << "> "
+            << this
+            << " context->address = " << ca
+            << " context->stream = " << cs
+            << " equal = " << (ca == cs)
+            << std::endl;
+        
+        std::cout << ss3.str();
+    }
 };
+
 // 连接管理器，支持简单的复用机制
 class client_socket_manager : public std::enable_shared_from_this<client_socket_manager> {
     boost::asio::io_context&             io_;
@@ -76,6 +96,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
                 if (std::chrono::steady_clock::now() < i->second.expire) {
                     context->stream = std::make_unique<boost::beast::tcp_stream>( std::move(*i->second.socket) );
                     cache_.erase(i);
+                    context->dump("revisit");
                     boost::asio::post(context->executor, std::move(handler));
                     return;
                 }
@@ -83,7 +104,8 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
             }
             // 建立新的连接(注意回调回到 context->executor 上下文)
             auto on_connect = [context, handler = std::move(handler)] (boost::system::error_code error) mutable {
-                boost::asio::post(context->executor, [handler = std::move(handler), error] () mutable {
+                context->dump("connect");
+                boost::asio::post(context->executor, [context, handler = std::move(handler), error] () mutable {
                     handler(error);
                 });
             };
@@ -100,6 +122,7 @@ class client_socket_manager : public std::enable_shared_from_this<client_socket_
     void release(std::shared_ptr<client_execute_context<Executor, RequestBody, ResponseBody, BufferSize>> context, ReleaseHandler&& handler) {
         boost::asio::post(strand_, [this, context, handler = std::move(handler), self = shared_from_this()] () mutable {
             auto now = std::chrono::steady_clock::now();
+            context->dump("release");
             cache_.emplace(std::make_pair(context->address, cached_socket{
                 std::make_unique<boost::asio::ip::tcp::socket>(std::move(context->stream->release_socket())), now + ttl_}));
             boost::asio::post(context->executor, std::move(handler));

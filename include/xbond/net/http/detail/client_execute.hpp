@@ -25,24 +25,33 @@ class client_execute: public boost::asio::coroutine {
     , context_(obj) {}
 
     client_execute(const client_execute& ce) = default;
-    // client_execute(client_execute&& ce) = default; // 复制代替移动，防止下述函数调用流程由于 EVALUATION 顺序可能导致的问题
+    client_execute(client_execute&& ce)
+    : manager_(ce.manager_)
+    , context_(ce.context_) {} // 复制代替移动，防止下述函数调用流程由于 EVALUATION 顺序可能导致的问题
 
     // AsyncOperation == boost::asio::detail::composed_op< client_execute , void(boost::system::error_code) >
     template <class AsyncOperation>
     inline void operator () (AsyncOperation& self, boost::system::error_code error = {}, std::size_t size = 0) { BOOST_ASIO_CORO_REENTER(this) {
         // 解析域名并获得网络连接
         BOOST_ASIO_CORO_YIELD manager_->acquire(context_, std::move(self));
-        if (error) goto DONE;
+        if (error) {
+            self.complete(error);
+            return;
+        }
         // 超时设置
         context_->stream->expires_after(context_->timeout);
         context_->buffer.clear();
         // 发送请求
         context_->request.prepare_payload();
         BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*context_->stream, context_->request, std::move(self));
-        if (error) goto DONE;
+        if (error) {
+            context_->stream->expires_never();
+            BOOST_ASIO_CORO_YIELD manager_->closing(context_, std::move(self));
+            self.complete(error);
+            return;
+        }
         // 接收响应
         BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(*context_->stream, context_->buffer, context_->response, std::move(self));
-DONE:
         context_->stream->expires_never();
         context_->error = error == boost::asio::error::operation_aborted ? boost::beast::error::timeout : error;
             
